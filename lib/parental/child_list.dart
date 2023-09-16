@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:learning_control/check_point_list.dart';
 import 'package:learning_control/parse/parse_check_point.dart';
 import 'app_group_list.dart';
@@ -215,10 +216,52 @@ class _ChildListState extends State<ChildList> {
       ),
       initiallyExpanded: true,
       childrenPadding: const EdgeInsets.only(left: 30.0),
-      children: deviceList.where((device) => device.childID == child.objectId ).map((device) => ListTile(
-        title: Text(device.name),
-        onTap: ()=> showDeviceAppsTunerPage(child, device),
-      )).toList(),
+      children: deviceList.where((device) => device.childID == child.objectId ).map((device) {
+        return Slidable(
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) {
+                    _deleteDeviceWithDialog(device);
+                  },
+                  backgroundColor: Colors.grey,
+                  icon: Icons.delete,
+                  label: TextConst.txtDelete,
+                )
+              ],
+            ),
+
+            child: ListTile(
+              title: Text(device.name),
+              onTap: ()=> showDeviceAppsTunerPage(child, device),
+            )
+        );
+      }).toList(),
+    );
+  }
+
+  void _deleteDeviceWithDialog(Device device) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(TextConst.txtWarning),
+          content: Text(TextConst.txtDeleteChildDevice),
+          actions: <Widget>[
+            IconButton(icon: const Icon(Icons.cancel_outlined, color: Colors.deepOrangeAccent), onPressed: (){
+              Navigator.pop(context);
+            }),
+
+            IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
+              Navigator.pop(context);
+              deviceList.remove(device);
+              appState.deviceManager.deleteDevice(device);
+              setState(() {});
+            }),
+          ],
+        );
+      },
     );
   }
 

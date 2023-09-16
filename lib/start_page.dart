@@ -27,21 +27,25 @@ class _StartPageState extends State<StartPage> {
 
   void _starting() async {
     await AppState().initialization();
-    _screen = getScreenWidget();
+    _screen = await getScreenWidget();
 
     setState(() {
       _isStarting = false;
     });
   }
 
-  Widget getScreenWidget() {
+  Future<Widget> getScreenWidget() async {
     if (appState.firstRun) {
       return const Login();
     }
 
     if (appState.usingMode == UsingMode.parent) {
       if (appState.serverConnect.loggedIn) {
-        return const ChildList();
+        if (await appState.serverConnect.sessionHealthCheck()) {
+          return const ChildList();
+        } else {
+          return const Login();
+        }
       } else {
         return const Login();
       }

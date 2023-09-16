@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:crypto/crypto.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -118,6 +120,8 @@ class AppState {
   List<String> get skipAppList => _skipAppList;
   List<String> get skipAppCandidateList => _skipAppCandidateList;
 
+  late PinCodeManager pinCodeManager;
+
   /// Инициализация
   Future<bool> initialization() async {
     if (_prefs != null) return true;
@@ -161,6 +165,8 @@ class AppState {
 
     serverConnect = ParseConnect(_prefs!, log);
 
+    pinCodeManager = PinCodeManager(_prefs!);
+
     if (_firstRun) return false;
 
     _backGroundImageOn = _prefs!.getBool(keyBackGroundImage)??false;
@@ -189,7 +195,7 @@ class AppState {
     log.add('Exception $exception \n $stack');
   }
 
-  Future<bool> passwordDialog(BuildContext context) async {
+  Future<bool> monitoringSwitchingOffDialog(BuildContext context) async {
     final textController = TextEditingController();
     String  password = '';
 
@@ -204,7 +210,13 @@ class AppState {
               },
               controller: textController,
               decoration: InputDecoration(
-                hintText: TextConst.txtPassword,
+                hintText: TextConst.txtPasswordPinCode,
+                suffixIcon: IconButton(
+                    icon: const Icon(Icons.help),
+                    onPressed: (){
+                      Fluttertoast.showToast(msg: pinCodeManager.clue);
+                    }
+                )
               ),
               obscureText: true,
             ),
@@ -214,10 +226,10 @@ class AppState {
               }),
 
               IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
-                if (serverConnect.checkPasswordLocal(password)) {
+                if (pinCodeManager.checkPinCode(password) || serverConnect.checkPasswordLocal(password)) {
                   Navigator.pop(context, true);
                 } else {
-                  Fluttertoast.showToast(msg: TextConst.errInvalidPassword);
+                  Fluttertoast.showToast(msg: TextConst.errInvalidPasswordPinCode);
                 }
               }),
 
@@ -294,5 +306,38 @@ class AppState {
     PlatformService.setSkipAppList(_skipAppList);
 
     _prefs!.setStringList(keySkipAppList, _skipAppList);
+  }
+}
+
+class PinCodeManager {
+  static const String _keyPinCode     = 'PinCode';
+  static const String _keyPinCodeClue = 'PinCodeClue';
+  static const String _hashSalt        = 'Clue';
+
+  SharedPreferences prefs;
+
+  String get clue {
+    return prefs.getString(_keyPinCodeClue)??'';
+  }
+
+  PinCodeManager(this.prefs);
+
+  String _getHash(String str){
+    return md5.convert(utf8.encode('$str$_hashSalt')).toString();
+  }
+
+  void setPinCode(String pinCode, String pinCodeClue) {
+    prefs.setString(_keyPinCode, _getHash(pinCode));
+    prefs.setString(_keyPinCodeClue, pinCodeClue);
+  }
+
+  bool checkPinCode(String testPinCode) {
+    final pinCode = prefs.getString(_keyPinCodeClue)??'';
+    return pinCode == _getHash(testPinCode);
+  }
+
+  bool exists () {
+    final pinCode = prefs.getString(_keyPinCodeClue)??'';
+    return pinCode.isNotEmpty;
   }
 }

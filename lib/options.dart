@@ -1,3 +1,4 @@
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learning_control/parental/apps_tuner.dart';
 import 'launcher.dart';
 import 'platform_service.dart';
@@ -31,6 +32,9 @@ class _OptionsState extends State<Options> {
 
   bool _isControlOn    = false;
 
+  bool _obscurePinCode = true;
+  bool _obscurePinCodeChanged = false;
+
   Child? _child;
   Device? _device;
 
@@ -51,7 +55,9 @@ class _OptionsState extends State<Options> {
   
   final _textControllerChildName  = TextEditingController();
   final _textControllerDeviceName = TextEditingController();
-  
+  final _textControllerPinCode    = TextEditingController();
+  final _textControllerPinCodeClue = TextEditingController();
+
   bool _serverAvailable = false;
 
   @override
@@ -102,6 +108,8 @@ class _OptionsState extends State<Options> {
     _launcherOk     = await PlatformService.isMyLauncherDefault();
 
     _isControlOn = appState.monitoring.status;
+
+    _textControllerPinCodeClue.text = appState.pinCodeManager.clue;
 
     setState(() {
       _isStarting = false;
@@ -304,6 +312,66 @@ class _OptionsState extends State<Options> {
               ),
             ],
 
+            // Поле ввода "Пин код"
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextField(
+                controller: _textControllerPinCode,
+                decoration: InputDecoration(
+                    filled: true,
+                    labelText: TextConst.txtPinCode,
+                    hintText: TextConst.txtPinCodeInfo,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(width: 3, color: Colors.blueGrey),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(width: 3, color: Colors.blue),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    suffixIcon: _obscurePinCodeChanged ? IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _obscurePinCode = !_obscurePinCode;
+                        });
+                      },
+                      icon: Icon(_obscurePinCode?Icons.abc:Icons.password),
+                    ) : null,
+                ),
+                obscureText: _obscurePinCode,
+                onChanged: ((_) {
+                  if (!_obscurePinCodeChanged) return;
+                  setState((){
+                    _obscurePinCodeChanged = true;
+                  });
+                }),
+              ),
+            ),
+
+            // Поле ввода "Подсказка к пинкоду"
+            Padding(
+              padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15),
+              child: TextField(
+                controller: _textControllerPinCodeClue,
+                decoration: InputDecoration(
+                  filled: true,
+                  labelText: TextConst.txtPinCodeClue,
+                  hintText: TextConst.txtPinCodeClue,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(width: 3, color: Colors.blueGrey),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(width: 3, color: Colors.blue),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                onChanged: ((_) {
+                  _obscurePinCodeChanged = true;
+                })
+              ),
+            ),
+
             // Переключатель "Включить контроль"
             ListTile(
               title: Text(TextConst.txtSwitchControlOn),
@@ -361,6 +429,19 @@ class _OptionsState extends State<Options> {
   }
 
   void applyChanges() async {
+    if ( (_obscurePinCodeChanged && _textControllerPinCode.text.isEmpty ) || _textControllerPinCodeClue.text.isEmpty) {
+      Fluttertoast.showToast(msg: TextConst.txtInputPinCode);
+      return;
+    }
+
+    if (_obscurePinCodeChanged) {
+      if (_textControllerPinCode.text.isEmpty || _textControllerPinCodeClue.text.isEmpty) {
+        Fluttertoast.showToast(msg: TextConst.txtInputPinCode);
+        return;
+      }
+      appState.pinCodeManager.setPinCode(_textControllerPinCode.text, _textControllerPinCodeClue.text);
+    }
+
     if (_selChild != null)  await appState.childManager.setChildAsCurrent(_selChild!);
     if (_selDevice != null)  await appState.deviceManager.setDeviceAsCurrent(_selDevice!);
 

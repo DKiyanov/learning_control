@@ -15,6 +15,7 @@ class TextConst{
   static String txtWithServer     = 'С сервером';
   static String txtEmailAddress   = 'Адрес электронной почты родителя';
   static String txtPassword       = 'Пароль';
+  static String txtPasswordPinCode = 'Пинкод/Пароль';
   static String txtSignIn         = 'Войти';
   static String txtSignUp         = 'Зарегистрироваться';
   static String txtInputAllParams = 'Нужно заполнить все поля';
@@ -72,6 +73,12 @@ class TextConst{
   static String txtHyphen          = '-';
   static String txtDoDelete       = 'Удалить';
   static String txtChildrenDevices = 'Дети и их устройства';
+  static String txtWarning          = 'Предупреждение';
+  static String txtDeleteChildDevice = 'Вы хотите удалить устройтов ребёнка, уверены';
+  static String txtPinCode           = 'Пинкод';
+  static String txtPinCodeInfo       = 'Пинкод хранится на устройстве, на сервер не передаётся';
+  static String txtPinCodeClue       = 'Подсказка к пинкоду';
+  static String txtInputPinCode      = 'Обязательно введите пинкод и подсказку к нему';
 
   static String txtUsingModeTitle      = 'Выбор режима использования устройства';
   static String txtUsingModeInvitation = 'Выбирите пожалуйста кем будет использоваться это устойство';
@@ -85,6 +92,7 @@ class TextConst{
   static String errFailedLogin   = 'Не удалось подключиться к серверу';
   static String errFailedSignUp   = 'Не удалось создать учётную запись на сервере';
   static String errInvalidPassword = 'Не правильный пароль';
+  static String errInvalidPasswordPinCode = 'Не правильный пароль/пинкод';
 
 
   static String msgAppGroup1  = 'Есть другая группа с именем';

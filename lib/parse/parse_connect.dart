@@ -124,6 +124,19 @@ class ParseConnect {
     return ret;
   }
 
+  Future<bool> sessionHealthCheck() async {
+    // Parse().healthCheck() - не выдаёт исключение когда сервер доступен но сейсия протухла
+    try {
+      final query = QueryBuilder<ParseUser>(ParseUser.forQuery());
+      query.whereEqualTo('username', user!.username);
+
+      await query.find();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> _connectToServer(String url, String login, String password, ConnectMode mode) async {
     lastError = '';
 

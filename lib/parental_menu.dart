@@ -139,7 +139,7 @@ class _ParentalMenuState extends State<ParentalMenu> {
       widgetList.add(
         ElevatedButton(
           onPressed: (){
-            appState.passwordDialog(context).then((value) {
+            appState.monitoringSwitchingOffDialog(context).then((value) {
               if (!value) return;
               if (!mounted) return;
               setState(() {

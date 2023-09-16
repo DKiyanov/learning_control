@@ -146,7 +146,7 @@ class DeviceManager {
   Device? getCurrentDevice() => _device;
 
   Future<Device?> updateCurrentDevice(String deviceName, int color, ParseUser user, Child child) async {
-    if (_device != null){
+    if (_device != null) {
       _device!.modify(deviceName, color);
       await _device!.save();
       return _device;
@@ -161,14 +161,24 @@ class DeviceManager {
     return newDevice;
   }
 
-  Future<bool> setDeviceAsCurrent(Device device) async {
-    final deviceID = device.objectId??'';
+  Future<bool> setDeviceAsCurrent(Device newDevice) async {
+    if (_device != null) {
+      await _device!.unpin();
+    }
+
+    if (newDevice.objectId == null || newDevice.objectId!.isEmpty){
+      await newDevice.save();
+    }
+
+    final deviceID = newDevice.objectId??'';
     if (deviceID.isEmpty) return false;
 
-    await device.pin();
+    await newDevice.pin();
 
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(keyDeviceID, deviceID);
+
+    _device = newDevice;
 
     return true;
   }
@@ -177,5 +187,13 @@ class DeviceManager {
     final query = QueryBuilder<Device>(Device());
     query.whereEqualTo(Device.keyUserID, user.objectId);
     return await query.find();
+  }
+
+  Future<bool> deleteDevice(Device device) async {
+    final result = await device.delete();
+    // здесь удаляется только заголовок
+    // остальные связанные данные должны удаляться по тригеру на сервере
+
+    return result.success;
   }
 }
