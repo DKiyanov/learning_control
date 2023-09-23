@@ -111,7 +111,7 @@ class _ParentalMenuState extends State<ParentalMenu> {
           Expanded(
             child: ElevatedButton(
               onPressed: (){
-                appState.setBackgroundImage().then((value) {
+                appState.setBackgroundImage(context).then((value) {
                   setState(() { });
                 });
               } ,

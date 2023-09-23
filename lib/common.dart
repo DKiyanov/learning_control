@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'app_state.dart';
 
 class TextConst{
-  static String versionDateStr    = '30.04.2023';
+  static String versionDateStr    = '19.09.2023';
   static String version           = 'Версия';
   static String defaultURL        = 'http://192.168.0.142:1337/parse';
 
@@ -79,6 +79,7 @@ class TextConst{
   static String txtPinCodeInfo       = 'Пинкод хранится на устройстве, на сервер не передаётся';
   static String txtPinCodeClue       = 'Подсказка к пинкоду';
   static String txtInputPinCode      = 'Обязательно введите пинкод и подсказку к нему';
+  static String txtInvalidInstallation = 'Похоже что то сломалось, лучше попробовать переустановить приложение';
 
   static String txtUsingModeTitle      = 'Выбор режима использования устройства';
   static String txtUsingModeInvitation = 'Выбирите пожалуйста кем будет использоваться это устойство';

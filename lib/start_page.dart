@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:learning_control/platform_service.dart';
 import 'parental/child_list.dart';
 import 'common.dart';
 import 'login.dart';
@@ -26,12 +28,19 @@ class _StartPageState extends State<StartPage> {
   }
 
   void _starting() async {
-    await AppState().initialization();
-    _screen = await getScreenWidget();
+    try {
+      await AppState().initialization();
+      _screen = await getScreenWidget();
 
-    setState(() {
-      _isStarting = false;
-    });
+      setState(() {
+        _isStarting = false;
+      });
+    } catch (e) {
+      await appState.prefs.clear();
+      Fluttertoast.showToast(msg: TextConst.txtInvalidInstallation);
+      PlatformService.restartApp();
+      return;
+    }
   }
 
   Future<Widget> getScreenWidget() async {
@@ -66,7 +75,11 @@ class _StartPageState extends State<StartPage> {
           centerTitle: true,
           title: Text(TextConst.txtStarting),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('${TextConst.version}: ${TextConst.versionDateStr}'),
+          Container(height: 10),
+          const CircularProgressIndicator(),
+        ])),
       );
     }
 

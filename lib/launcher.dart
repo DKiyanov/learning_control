@@ -1,4 +1,3 @@
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:learning_control/check_point_list.dart';
 import 'package:learning_control/parental_menu.dart';
 import 'package:learning_control/parse/parse_app/app_access.dart';
@@ -142,25 +141,33 @@ class _LauncherState extends State<Launcher> {
       onTap: () => _openApp(app.packageName),
     );
 
-    final appWidget = Slidable(
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        children: [
-          if (!appAccessInfo.appGroup.notDelApp) ...[
-            SlidableAction(
-                onPressed: (context){
-                  appState.deleteApp(app.packageName).then((value) => _refresh());
-                },
-                backgroundColor: Colors.deepOrangeAccent,
-                foregroundColor: Colors.blue,
-                icon: Icons.delete,
-                label: TextConst.txtDelete
-            )
-          ]
-        ],
-      ),
+    final appWidget = GestureDetector(
+      child: appTile,
+      onLongPressStart: (details) async {
+        final renderBox = Overlay.of(context)?.context.findRenderObject() as RenderBox;
+        final tapPosition = renderBox.globalToLocal(details.globalPosition);
 
-      child: appTile
+        final items = <PopupMenuEntry<String>>[];
+
+        items.addAll([
+          PopupMenuItem<String>(
+            value: TextConst.txtDelete,
+            child: Text(TextConst.txtDelete),
+            onTap: (){
+              appState.deleteApp(app.packageName).then((value) => _refresh());
+            },
+          )
+        ]);
+
+        showMenu<String>(
+          context: context,
+          position: RelativeRect.fromRect(
+              Rect.fromLTWH(tapPosition.dx, tapPosition.dy, 100, 100),
+              Rect.fromLTWH(0, 0, renderBox.paintBounds.size.width, renderBox.paintBounds.size.height)
+          ),
+          items: items,
+        );
+      },
     );
 
     return _AppWidget(app, appWidget, appAccessInfo);

@@ -21,6 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path_util;
+import 'package:filesystem_picker/filesystem_picker.dart';
 
 import 'applications_info.dart';
 import 'package:simple_events/simple_events.dart';
@@ -140,11 +141,9 @@ class AppState {
     // Подписка на переход приложения в foreground/background
     FGBGEvents.stream.listen((event) {
       if (event == FGBGType.foreground ) {
-        print('is foreground');
         _isForeground = true;
         launcherRefreshEvent.send();
       } else {
-        print('is background');
         _isForeground = false;
       }
     });
@@ -153,7 +152,7 @@ class AppState {
     _appDir = appDocDir.path;
 
     _prefs = await SharedPreferences.getInstance();
-//    await _prefs!.clear(); // для отладки - имитация первого запуска
+    //await _prefs!.clear(); // для отладки - имитация первого запуска
 
     apps   = ApplicationsInfo(log);
     await apps.init();
@@ -212,7 +211,7 @@ class AppState {
               decoration: InputDecoration(
                 hintText: TextConst.txtPasswordPinCode,
                 suffixIcon: IconButton(
-                    icon: const Icon(Icons.help),
+                    icon: const Icon(Icons.help, color: Colors.blue),
                     onPressed: (){
                       Fluttertoast.showToast(msg: pinCodeManager.clue);
                     }
@@ -246,7 +245,16 @@ class AppState {
     _prefs!.setString(keyUsingMode,_usingMode!.name);
   }
 
-  Future<void> setBackgroundImage() async {
+  Future<void> setBackgroundImage(BuildContext context) async {
+    // final path = await FilesystemPicker.openDialog(
+    //   context: context,
+    //   rootDirectory: Directory(rootPath),
+    //   fsType: FilesystemType.file,
+    //   allowedExtensions: [
+    //     '.jpg', '.png',
+    //   ]
+    // );
+
     final filePickerResult = await FilePicker.platform.pickFiles(
        type: FileType.image
     );
@@ -312,7 +320,7 @@ class AppState {
 class PinCodeManager {
   static const String _keyPinCode     = 'PinCode';
   static const String _keyPinCodeClue = 'PinCodeClue';
-  static const String _hashSalt        = 'Clue';
+  static const String _hashSalt       = 'Clue';
 
   SharedPreferences prefs;
 
@@ -332,7 +340,7 @@ class PinCodeManager {
   }
 
   bool checkPinCode(String testPinCode) {
-    final pinCode = prefs.getString(_keyPinCodeClue)??'';
+    final pinCode = prefs.getString(_keyPinCode)??'';
     return pinCode == _getHash(testPinCode);
   }
 
