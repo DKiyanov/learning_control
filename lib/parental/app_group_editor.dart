@@ -46,6 +46,17 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
   String oldName = '';
 
   @override
+  void dispose() {
+    _tcName.dispose();
+    _tcCostNumerator.dispose();
+    _tcCostDenominator.dispose();
+    _tcWorkingDuration.dispose();
+    _tcRelaxDuration.dispose();
+
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 

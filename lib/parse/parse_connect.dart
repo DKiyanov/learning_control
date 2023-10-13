@@ -216,6 +216,8 @@ class ParseConnect {
   bool _synchronizeLock = false;
   int _lastSynchronization = 0;
 
+  bool get synchronizationInProcess => _synchronizeLock;
+
   Future<void> synchronize({required bool showErrorToast, required bool ignoreShortTime}) async {
     if (_synchronizeLock) {
       _log.add('synchronization is already in progress');

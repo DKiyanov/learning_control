@@ -53,9 +53,9 @@ class _OptionsState extends State<Options> {
   final _deviceList = <Device>[];
   final _deviceNameList = <String>[];  
   
-  final _textControllerChildName  = TextEditingController();
-  final _textControllerDeviceName = TextEditingController();
-  final _textControllerPinCode    = TextEditingController();
+  final _textControllerChildName   = TextEditingController();
+  final _textControllerDeviceName  = TextEditingController();
+  final _textControllerPinCode     = TextEditingController();
   final _textControllerPinCodeClue = TextEditingController();
 
   bool _serverAvailable = false;
@@ -75,6 +75,11 @@ class _OptionsState extends State<Options> {
 
   @override
   void dispose() {
+    _textControllerChildName.dispose();
+    _textControllerDeviceName.dispose();
+    _textControllerPinCode.dispose();
+    _textControllerPinCodeClue.dispose();
+
     super.dispose();
 
     appState.monitoring.setMonitoring();

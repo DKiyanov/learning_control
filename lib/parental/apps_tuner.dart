@@ -55,6 +55,13 @@ class _AppsTunerState extends State<AppsTuner> {
   String _filterMode = TextConst.txtAppManualFilter;
 
   @override
+  void dispose() {
+    _textControllerFilter.dispose();
+
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 

@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'app_state.dart';
 
 class TextConst{
@@ -22,6 +21,7 @@ class TextConst{
   static String txtProceed        = 'Продолжить';
   static String txtOptions        = 'Настройки';
   static String txtParentalMenu   = 'Родительское меню';
+  static String txtBackGroundDialog  = 'Выбор фоновой кортинки';
   static String txtAppFilterShow  = 'Показать фильтр';
   static String txtAppManualFilter = 'Ручной ввод фильтра';
   static String txtAppAvailableFilter = 'Доступные';
@@ -86,6 +86,9 @@ class TextConst{
   static String txtUsingModeParent     = 'Это устройство будет использоваться РОДИТЕЛЕМ';
   static String txtUsingModeChild      = 'Это устройство будет использоваться РЕБЁНКОМ';
   static String txtUsingModeWarning    = 'Изменить выор можно будет только переустановкой программы';
+  static String txtImageFolder          = 'Каталог с картинками';
+  static String txtSelectImageFolder    = 'Выбирите каталог с картинками';
+  static String txtSelectFolder         = 'Выбрать каталог';
 
 
   static String errServerUrlEmpty  = 'Не указан адрес сервера';
@@ -343,3 +346,30 @@ final dayNameList = <String>[
   TextConst.txtTtMonth30  ,
   TextConst.txtTtMonth31  ,
 ];
+
+Widget longPressMenu<T>({
+  required BuildContext context,
+  required Widget child,
+  required List<PopupMenuEntry<T>> menuItemList,
+  PopupMenuItemSelected? onSelect
+}) {
+
+  return GestureDetector(
+    child: child,
+    onLongPressStart: (details) async {
+      final renderBox = Overlay.of(context)?.context.findRenderObject() as RenderBox;
+      final tapPosition = renderBox.globalToLocal(details.globalPosition);
+
+      final value = await showMenu<T>(
+        context: context,
+        position: RelativeRect.fromLTRB(tapPosition.dx, tapPosition.dy, tapPosition.dx, tapPosition.dy),
+        items: menuItemList,
+      );
+
+      if (value != null && onSelect != null) {
+        onSelect.call(value);
+      }
+    },
+  );
+
+}

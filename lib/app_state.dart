@@ -5,7 +5,6 @@ import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
 import 'package:device_apps/device_apps.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -21,10 +20,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path_util;
-import 'package:filesystem_picker/filesystem_picker.dart';
 
 import 'applications_info.dart';
 import 'package:simple_events/simple_events.dart';
+import 'background_image_dialog.dart';
 import 'log.dart';
 import 'monitoring.dart';
 import 'common.dart';
@@ -236,6 +235,7 @@ class AppState {
           );
         });
 
+    textController.dispose();
     return result??false;
   }
 
@@ -246,26 +246,15 @@ class AppState {
   }
 
   Future<void> setBackgroundImage(BuildContext context) async {
-    // final path = await FilesystemPicker.openDialog(
-    //   context: context,
-    //   rootDirectory: Directory(rootPath),
-    //   fsType: FilesystemType.file,
-    //   allowedExtensions: [
-    //     '.jpg', '.png',
-    //   ]
-    // );
-
-    final filePickerResult = await FilePicker.platform.pickFiles(
-       type: FileType.image
-    );
-    if (filePickerResult == null) return;
+    final path = await BackGroundImageDialog.navigatorPush(context);
+    if (path == null || path.isEmpty) return;
 
     final testFile = getBackgroundImageFile();
     if (await testFile.exists()) {
       await testFile.delete();
     }
 
-    final imageFile = File(filePickerResult.files.single.path!);
+    final imageFile = File(path);
     await imageFile.copy(testFile.path);
 
     backGroundImageOn = await _loadBackGroundImage();

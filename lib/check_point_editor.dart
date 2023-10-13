@@ -41,16 +41,28 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
   final appGroupList = <DropdownMenuItem<AppGroup>>[];
   final statusList = <DropdownMenuItem<CheckPointStatus>>[];
 
-  final _tcTaskText = TextEditingController();
+  final _tcTaskText            = TextEditingController();
   final _tcNoticeBeforeMinutes = TextEditingController();
-  final _tcCountDaysToCancel = TextEditingController();
-  final _tcBonusValue = TextEditingController();
-  final _tcPenaltyValue = TextEditingController();
-  final _tcCompletionComment = TextEditingController();
+  final _tcCountDaysToCancel   = TextEditingController();
+  final _tcBonusValue          = TextEditingController();
+  final _tcPenaltyValue        = TextEditingController();
+  final _tcCompletionComment   = TextEditingController();
 
   CheckPoint? _thisCheckPoint;
   
   bool _isStarting = true;
+
+  @override
+  void dispose() {
+    _tcTaskText.dispose();
+    _tcNoticeBeforeMinutes.dispose();
+    _tcCountDaysToCancel.dispose();
+    _tcBonusValue.dispose();
+    _tcPenaltyValue.dispose();
+    _tcCompletionComment.dispose();
+
+    super.dispose();
+  }
 
   @override
   void initState() {

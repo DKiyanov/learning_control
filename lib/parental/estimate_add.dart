@@ -30,6 +30,15 @@ class _EstimateAddState extends State<EstimateAdd> {
   Coin? _selCoin;
 
   @override
+  void dispose() {
+    _tcForWhat.dispose();
+    _tcCoinCount.dispose();
+
+    super.dispose();
+  }
+
+
+  @override
   void initState() {
     super.initState();
 

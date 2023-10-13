@@ -32,6 +32,15 @@ class _LoginState extends State<Login> {
   bool _obscurePassword = true;
 
   @override
+  void dispose() {
+    _tcServerURL.dispose();
+    _tcLogin.dispose();
+    _tcPassword.dispose();
+
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 

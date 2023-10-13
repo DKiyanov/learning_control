@@ -196,6 +196,8 @@ class _DayLengthListState extends State<DayLengthList> {
       return int.parse(textController.text);
     }
 
+    textController.dispose();
+
     return value;
   }
 }

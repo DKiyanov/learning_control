@@ -103,6 +103,8 @@ class _LauncherState extends State<Launcher> {
 
   @override
   void dispose(){
+    _textControllerFilter.dispose();
+
     for (var listener in _listenerList) {
       listener.dispose();
     }
@@ -132,45 +134,33 @@ class _LauncherState extends State<Launcher> {
       appIconWidget = Image.memory(app.icon);
     }
 
+    final items = <PopupMenuEntry<String>>[];
+    items.addAll([
+      PopupMenuItem<String>(
+        value: TextConst.txtDelete,
+        child: Text(TextConst.txtDelete),
+        onTap: (){
+          appState.deleteApp(app.packageName).then((value) => _refresh());
+        },
+      )
+    ]);
+
+    final appIconWidgetEx = longPressMenu<String>(
+      context     : context,
+      child       : appIconWidget!,
+      menuItemList: items,
+    );
+
     final appTile = ListTile(
       contentPadding: const EdgeInsets.all(10.0),
-      leading: appIconWidget,
+      leading: appIconWidgetEx,
       title: Text(app.appName),
       subtitle: appAccess != AppAccess.allowed? Text(appAccessInfo.message): null,
       enabled: appAccess != AppAccess.disabled,
       onTap: () => _openApp(app.packageName),
     );
 
-    final appWidget = GestureDetector(
-      child: appTile,
-      onLongPressStart: (details) async {
-        final renderBox = Overlay.of(context)?.context.findRenderObject() as RenderBox;
-        final tapPosition = renderBox.globalToLocal(details.globalPosition);
-
-        final items = <PopupMenuEntry<String>>[];
-
-        items.addAll([
-          PopupMenuItem<String>(
-            value: TextConst.txtDelete,
-            child: Text(TextConst.txtDelete),
-            onTap: (){
-              appState.deleteApp(app.packageName).then((value) => _refresh());
-            },
-          )
-        ]);
-
-        showMenu<String>(
-          context: context,
-          position: RelativeRect.fromRect(
-              Rect.fromLTWH(tapPosition.dx, tapPosition.dy, 100, 100),
-              Rect.fromLTWH(0, 0, renderBox.paintBounds.size.width, renderBox.paintBounds.size.height)
-          ),
-          items: items,
-        );
-      },
-    );
-
-    return _AppWidget(app, appWidget, appAccessInfo);
+    return _AppWidget(app, appTile, appAccessInfo);
   }
 
   Future<void> _refreshAppList() async {
@@ -434,6 +424,7 @@ class _LauncherState extends State<Launcher> {
   }
 
   void _openApp(String packageName) {
+    if (_synchronization) return;
     appState.openApp(packageName).then((value) => _refresh());
   }
 
@@ -606,3 +597,4 @@ class _LauncherState extends State<Launcher> {
     );
   }
 }
+
