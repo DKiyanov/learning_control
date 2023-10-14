@@ -33,29 +33,42 @@ class Time{
   int compareTo(Time other){
     return intTime.compareTo(other.intTime);
   }
+
+  // duration in minutes = this - other
+  int getDifference(Time other) {
+    return (hour * 60 + minute) - (other.hour * 60 + other.minute);
+  }
 }
 
 class TimeRange{
   int  day;
   Time from;
   Time to;
+  int  duration; // in minutes
 
-  TimeRange({required this.day, required this.from, required this.to});
+  TimeRange({required this.day, required this.from, required this.to, required this.duration});
 
-  factory TimeRange.fromJson(Map<String, dynamic> json){
+  factory TimeRange.fromJson(Map<String, dynamic> json) {
     return TimeRange(
         day      : json['day'],
         from     : Time.fromString(json['from']),
         to       : Time.fromString(json['to']),
+        duration : json['duration']??0,
     );
   }
 
-  Map<String, dynamic> toJson(){
+  Map<String, dynamic> toJson() {
     return {
       'day'      : day,
       'from'     : from.toString(),
       'to'       : to.toString(),
+      'duration' : duration,
     };
+  }
+
+  String getHash() {
+    final str = jsonEncode(toJson);
+    return str;
   }
 }
 

@@ -3,7 +3,6 @@ import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app_state.dart';
 import '../../common.dart';
-import '../../day_length.dart';
 import '../parse_check_point.dart';
 import '../parse_util.dart';
 import '../../time.dart';
@@ -51,10 +50,12 @@ class AppGroup extends ParseObject implements ParseCloneable {
   int    get lastChangeTime  => get<int>(keyLastChangeTime)??0;
   bool   get isDefault       => get<bool>(keyIsDefault)??false;
 
-  int    _maxTotalDurationPerDay = 0;
-  int    get maxTotalDurationPerDay => _maxTotalDurationPerDay;
-  int    _totalDuration = 0; // общее время использования
-  int    get totalDuration => _totalDuration;
+  TimeRange? _timeRange;
+  int    get timeRangeMaxDuration => _timeRange?.duration??0;
+  String _timeRangeHash = '';
+
+  int    _timeRangeUsageDuration = 0; // время использования в рамках интервала
+  int    get timeRangeUsageDuration => _timeRangeUsageDuration;
 
   int    get workingDuration => get<int>(keyWorkingDuration)??0;
   int    get relaxDuration   => get<int>(keyRelaxDuration)??0;
@@ -82,8 +83,6 @@ class AppGroup extends ParseObject implements ParseCloneable {
 
   List<TimeRange>? _timetable;
 
-  List<DayLength>? _dayLengthList;
-
   /// возвращает расписание доступности
   List<TimeRange> getTimetable() {
     if (_timetable != null) return _timetable!;
@@ -104,28 +103,6 @@ class AppGroup extends ParseObject implements ParseCloneable {
     _timetable = timetable;
     final timetableStr = timeRangeListToJsonStr(timetable);
     set(keyTimetable, timetableStr);
-  }
-
-  /// возвращает расписание длительности дня
-  List<DayLength> getDayLengthList() {
-    if (_dayLengthList != null) return _dayLengthList!;
-
-    final dayLengthListStr = get<String>(keyDayLengthList)??'';
-
-    if (dayLengthListStr.isEmpty) {
-      _dayLengthList = [];
-    } else {
-      _dayLengthList = jsonStrToDayLengthList(dayLengthListStr);
-    }
-
-    return _dayLengthList!;
-  }
-
-  /// устанавливает расписание длительности дня
-  void setDayLengthList(List<DayLength> dayLengthList){
-    _dayLengthList = dayLengthList;
-    final dayLengthListStr = dayLengthListToJsonStr(dayLengthList);
-    set(keyDayLengthList, dayLengthListStr);
   }
 
   /// Создаёт или изменяет запись группы
@@ -174,7 +151,6 @@ class AppGroup extends ParseObject implements ParseCloneable {
   /// Расчитываем параметры влияющие на доступность группы зависящие от времени
   void calcTimeAvailability(int weekDay, int monthDay, int intTime){
     _calcTimetableAvailability(weekDay, monthDay, intTime);
-    _getMaxTotalDurationPerDay(weekDay, monthDay);
   }
 
   /// Рассчитывает доступность группы по расписанию
@@ -190,30 +166,32 @@ class AppGroup extends ParseObject implements ParseCloneable {
         (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay)
     );
 
+    final timeRangeHash = _timeRange?.getHash()??'';
+
+    if (_timeRangeHash != timeRangeHash) {
+      _timeRangeHash = timeRangeHash;
+      _timeRange     = timeRange;
+      _timeRangeUsageDuration = 0;
+    }
+
     _availableOnTimetable = timeRange != null;
   }
 
-  /// Получаем максимальную длительность использования на день
-  void _getMaxTotalDurationPerDay(int weekDay, int monthDay){
-    getDayLengthList();
-    if (_dayLengthList!.isEmpty) {
-      _maxTotalDurationPerDay = 0;
-      return;
-    }
+  static TimeRange? getTimeRange(DateTime dateTime, List<TimeRange>? timetable) {
+    final weekDay  = dateTime.weekday;
+    final monthDay = dateTime.day;
+    final intTime  = timeToInt(dateTime);
 
-    final dayLength = _dayLengthList!.firstWhereOrNull((dayLength) =>
-        (dayLength.day == 0 || dayLength.day == weekDay || dayLength.day == monthDay)
+    final timeRange = timetable!.firstWhereOrNull((timeRange) =>
+    timeRange.from.intTime <= intTime && timeRange.to.intTime >= intTime &&
+        (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay)
     );
 
-    if (dayLength != null) {
-      _maxTotalDurationPerDay = dayLength.duration;
-    }
-
-    _maxTotalDurationPerDay += appState.checkPointManager.getAppGroupResult(this);
+    return timeRange;
   }
 
   void fixUsageDuration(int minutes){
-    _totalDuration += minutes;
+    _timeRangeUsageDuration += minutes;
 
     if (relaxDuration > 0 && workingDuration > 0) {
       _fatigue += minutes * 60000 * relaxDuration / workingDuration;
@@ -248,7 +226,8 @@ class AppGroup extends ParseObject implements ParseCloneable {
     final prefs = await SharedPreferences.getInstance();
     Map<String,dynamic> map = {
       "time"          : DateTime.now().millisecondsSinceEpoch,
-      "totalDuration" : _totalDuration,
+      "usageDuration" : _timeRangeUsageDuration,
+      "timeRange"     : _timeRangeHash,
       "fatigue"       : _fatigue,
       "relaxEndTime"  : _relaxEndTime
     };
@@ -256,7 +235,7 @@ class AppGroup extends ParseObject implements ParseCloneable {
   }
 
   Future<void> loadLocalEx() async {
-    _totalDuration = 0;
+    _timeRangeUsageDuration = 0;
     _fatigue       = 0;
 
     final prefs = await SharedPreferences.getInstance();
@@ -267,9 +246,10 @@ class AppGroup extends ParseObject implements ParseCloneable {
     final int time = map["time"];
     final saveTime = DateTime.fromMillisecondsSinceEpoch(time);
     if ( dateToInt(saveTime) == dateToInt(DateTime.now()) ) {
-      _totalDuration = map["totalDuration"];
-      _fatigue       = map["fatigue"];
-      _relaxEndTime  = map["relaxEndTime"];
+      _timeRangeUsageDuration = map["usageDuration"]??0;
+      _timeRangeHash = map["timeRange"]??'';
+      _fatigue       = map["fatigue"]??0;
+      _relaxEndTime  = map["relaxEndTime"]??0;
     }
   }
 
@@ -296,8 +276,9 @@ class AppGroup extends ParseObject implements ParseCloneable {
       return AppAccessInfo(AppAccess.disabled, TextConst.txtNotUseWhileCharging, this);
     }
 
-    if ((maxTotalDurationPerDay > 0) && (totalDuration >= maxTotalDurationPerDay)) {
-      return AppAccessInfo(AppAccess.disabled, TextConst.txtLimitPerDayReached, this);
+    if ((timeRangeMaxDuration > 0) && (timeRangeUsageDuration >= timeRangeMaxDuration)) {
+      final str = '${TextConst.txtLimitPerRangeReached} ${TextConst.txtFrom} ${_timeRange!.from} ${TextConst.txtTo} ${_timeRange!.to} ${_timeRange!.duration} ${TextConst.txtMinutes}';
+      return AppAccessInfo(AppAccess.disabled, str, this);
     }
 
     final relaxMinutes = getRestRelaxMinutes();
@@ -332,7 +313,6 @@ class AppGroup extends ParseObject implements ParseCloneable {
   /// Приводит в соответствие вычисляемые поля в соотв с новыми данными
   void afterChangeFromServer(){
     _timetable = null;
-    _dayLengthList = null;
   }
 }
 
@@ -578,7 +558,7 @@ class AppGroupManager {
 
   void prepareForNewDay() {
     for (var appGroup in _appGroupList) {
-      appGroup._totalDuration = 0;
+      appGroup._timeRangeUsageDuration = 0;
       appGroup._fatigue = 0;
     }
   }

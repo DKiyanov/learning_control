@@ -61,51 +61,7 @@ class _TimetableState extends State<Timetable> {
         ],
       ),
 
-      body: ReorderableListView.builder(
-          padding: const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 8),
-          itemCount: widget.timetable.length,
-          itemBuilder: (context, index) {
-            final timeRange = widget.timetable[index];
-
-            return Slidable(
-              key: Key(timeRange.day.toString()),
-              startActionPane: ActionPane(
-                motion: const ScrollMotion(),
-                children: [
-                  SlidableAction(
-                    onPressed: (context){
-                      setState(() {
-                        widget.timetable.removeAt(index);
-                      });
-                    },
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    icon: Icons.delete,
-                    label: 'Delete',
-                  )
-                ],
-              ),
-
-              child: ListTile(
-                title: timeRangeView(timeRange),
-                trailing: ReorderableDragStartListener(
-                  index: index,
-                  child: const Icon(Icons.drag_handle),
-                ),
-              )
-            );
-          },
-
-        onReorder: (int oldIndex, int newIndex) {
-          setState(() {
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
-            }
-            final item = widget.timetable.removeAt(oldIndex);
-            widget.timetable.insert(newIndex, item);
-          });
-        },
-      ),
+      body: _body(),
 
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
@@ -118,68 +74,236 @@ class _TimetableState extends State<Timetable> {
     );
   }
 
-  Widget timeRangeViewTxt(TimeRange timeRange){
-    return const Text('test');
+  Widget _body() {
+    return Column(children: [
+      Row(children: [
+        Container(width: 16),
+
+        Expanded(child: ElevatedButton(
+          onPressed: () {  },
+          child: Column(children: [
+            Text(TextConst.txtTime),
+            Text(TextConst.txtFrom),
+          ]),
+        )),
+
+        Container(width: 6),
+
+        Expanded(child: ElevatedButton(
+          onPressed: () {  },
+          child: Column(children: [
+            Text(TextConst.txtTime),
+            Text(TextConst.txtTo),
+          ]),
+        )),
+
+        Container(width: 6),
+
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {  },
+            child: Column(children: [
+              Text(TextConst.txtDurationShort),
+              Text(TextConst.txtInMinutes),
+            ]),
+          ),
+        ),
+
+        Container(width: 56),
+      ]),
+
+      Expanded(child: _listView())
+    ]);
+
+    //return _listView();
+  }
+
+  Widget _listView() {
+    return ReorderableListView.builder(
+      itemCount: widget.timetable.length,
+      itemBuilder: (context, index) {
+        final timeRange = widget.timetable[index];
+
+        return Slidable(
+            key: ValueKey(timeRange),
+            startActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context){
+                    setState(() {
+                      widget.timetable.removeAt(index);
+                    });
+                  },
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete,
+                  label: 'Delete',
+                )
+              ],
+            ),
+
+            child: ListTile(
+              title: timeRangeView(timeRange),
+              trailing: ReorderableDragStartListener(
+                index: index,
+                child: const Icon(Icons.drag_handle),
+              ),
+            )
+        );
+      },
+
+      onReorder: (int oldIndex, int newIndex) {
+        setState(() {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          final item = widget.timetable.removeAt(oldIndex);
+          widget.timetable.insert(newIndex, item);
+        });
+      },
+    );
   }
 
   Widget timeRangeView(TimeRange timeRange){
-    return  Row(children: [
-      DropdownButton<int>(
-        isDense: false,
-        isExpanded: false,
-        value: timeRange.day,
-        onChanged: (int? dayIndex) {
-          setState(() {
-            timeRange.day = dayIndex!;
-          });
-        },
-        items: dayList,
+    String durationStr = '-';
+
+    if (timeRange.duration != 0) {
+      durationStr = timeRange.duration.toString();
+    } else {
+      if (timeRange.to.intTime > timeRange.from.intTime) {
+        durationStr = '${timeRange.to.getDifference(timeRange.from)}';
+      }
+    }
+
+    return Column(children: [
+      Row(
+        children: [
+          Text('${TextConst.txtDay}:'),
+          Container(width: 4),
+          
+          Expanded(
+            child: DropdownButton<int>(
+              isDense: true,
+              isExpanded: true,
+              value: timeRange.day,
+              onChanged: (int? dayIndex) {
+                setState(() {
+                  timeRange.day = dayIndex!;
+                });
+              },
+              items: dayList,
+            ),
+          ),
+          
+        ],
       ),
 
-      Container(width: 6),
+      Row(children: [
+        Expanded(child: ElevatedButton(
+            child: Text(timeRange.from.toString()),
+            onPressed: () async {
+              final timeOfDay = await showTimePicker(context: context, initialTime: timeRange.from.getTimeOfDay());
+              if (timeOfDay == null) return;
 
-      Expanded(child: ElevatedButton(
-          child: Text(timeRange.from.toString()),
-          onPressed: () {
-            showTimePicker(context: context, initialTime: timeRange.from.getTimeOfDay()).then((timeOfDay) => {
               setState(() {
-                timeRange.from = Time.fromTimeOfDay(timeOfDay!);
+                timeRange.from = Time.fromTimeOfDay(timeOfDay);
                 if (timeRange.to.intTime < timeRange.from.intTime) {
                   final from = timeRange.from;
                   timeRange.from = timeRange.to;
                   timeRange.to = from;
                 }
-              })
-            });
-          }
-      )),
+              });
+            }
+        )),
 
-      Container(width: 6),
+        Container(width: 6),
 
-      Expanded(child: ElevatedButton(
-          child: Text(timeRange.to.toString()),
-          onPressed: () {
-            showTimePicker(context: context, initialTime: timeRange.to.getTimeOfDay()).then((timeOfDay) => {
+        Expanded(child: ElevatedButton(
+            child: Text(timeRange.to.toString()),
+            onPressed: () async {
+              final timeOfDay = await showTimePicker(context: context, initialTime: timeRange.to.getTimeOfDay());
+              if (timeOfDay == null) return;
+
               setState(() {
-                timeRange.to = Time.fromTimeOfDay(timeOfDay!);
+                timeRange.to = Time.fromTimeOfDay(timeOfDay);
                 if (timeRange.to.intTime < timeRange.from.intTime) {
                   final from = timeRange.from;
                   timeRange.from = timeRange.to;
                   timeRange.to = from;
                 }
-              })
-            });
-          }
-      ))
+              });
+            }
+        )),
+
+
+        Container(width: 6),
+
+        Expanded(
+          child: ElevatedButton(
+              onPressed: () async {
+                final newDuration = await durationInputDialog(context, timeRange.duration);
+                if (timeRange.duration != newDuration) {
+                  setState(() {
+                    timeRange.duration = newDuration;
+                  });
+                }
+              },
+              child: Text(durationStr)
+          ),
+        ),
+
+      ]),
 
     ]);
+
   }
 
   void _addTimeRange() {
-    widget.timetable.add(TimeRange(
-      day  : 0,
-      from : Time(hour: 0 , minute: 0),
-      to   : Time(hour: 24, minute: 0),
-    ));
+    setState(() {
+      widget.timetable.add(TimeRange(
+        day     : 0,
+        from    : Time(hour: 0 , minute: 0),
+        to      : Time(hour: 24, minute: 0),
+        duration: 0,
+      ));
+    });
+  }
+
+  Future<int> durationInputDialog(BuildContext context, int value) async {
+    final textController = TextEditingController();
+    textController.text = value.toString();
+
+    final dialogResult = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(TextConst.txtWorkingDuration),
+            content: TextField(
+              controller: textController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+              decoration: const InputDecoration( ),
+            ),
+            actions: <Widget>[
+              IconButton(icon: const Icon(Icons.cancel_outlined, color: Colors.deepOrangeAccent), onPressed: (){
+                Navigator.pop(context, false);
+              }),
+
+              IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
+                Navigator.pop(context, true);
+              }),
+
+            ],
+          );
+        });
+
+    if (dialogResult != null && dialogResult){
+      if (textController.text.isEmpty) return 0;
+      return int.parse(textController.text);
+    }
+
+    textController.dispose();
+
+    return value;
   }
 }

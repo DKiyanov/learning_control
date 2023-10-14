@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'app_group_day_length_list.dart';
 import '../app_state.dart';
 import '../common.dart';
-import '../day_length.dart';
 import '../time.dart';
 import 'app_group_timetable.dart';
 
@@ -35,9 +33,6 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
 
   final _timetable         = <TimeRange>[];
   bool _timetableChanged   = false;
-
-  final _dayLengthList         = <DayLength>[];
-  bool _dayLengthListChanged   = false;
 
   bool _notDelApp           = false;
   bool _checkPointSensitive = false;
@@ -75,21 +70,22 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
       _notUseWhileCharging    = widget.appGroup!.notUseWhileCharging;
 
       _timetable.addAll( widget.appGroup!.getTimetable());
-      _dayLengthList.addAll(widget.appGroup!.getDayLengthList());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     String timetableText = '';
-    String dayLengthText = '';
+    
+    final timeRange = AppGroup.getTimeRange(DateTime.now(), _timetable);
 
-    if (_timetable.length == 1){
-      timetableText = ': ${_timetable[0].from.toString()} - ${_timetable[0].to.toString()}';
-    }
+    if (timeRange != null){
+      var duration = timeRange.duration;
+      if (duration == 0) {
+        duration = timeRange.to.getDifference(timeRange.from);
+      }
 
-    if (_dayLengthList.length == 1){
-      dayLengthText = ': ${_dayLengthList[0].duration.toString()}';
+      timetableText = ': ${timeRange.from.toString()} - ${timeRange.to.toString()} / $duration ${TextConst.txtMinutes}';
     }
 
     return Scaffold(
@@ -238,14 +234,6 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
                   onPressed: () => editTimetable(),
                 ),
 
-                // Кнопка раписание длительности
-                ElevatedButton(
-                  style: const ButtonStyle(alignment: Alignment.centerLeft),
-                  child: Text('${TextConst.txtDayLengthList}$dayLengthText'),
-                  onPressed: () => editDayLengthList(),
-                ),
-
-
                 Container(height: 8),
 
                 // Переключатель "Не использовать во время заряки устройства"
@@ -312,25 +300,6 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
     }
   }
 
-  Future<void> editDayLengthList() async {
-    final dayLengthList = <DayLength>[];
-
-    if (_dayLengthListChanged || widget.appGroup == null) {
-      dayLengthList.addAll(_dayLengthList);
-    } else {
-      dayLengthList.addAll( widget.appGroup!.getDayLengthList());
-    }
-
-    final dayLengthListChanged = await DayLengthList.navigatorPush(context, dayLengthList, _tcName.text);
-
-    if (dayLengthListChanged){
-      _dayLengthListChanged = dayLengthListChanged;
-      _dayLengthList.clear();
-      _dayLengthList.addAll(dayLengthList);
-      setState(() {});
-    }
-  }
-
   Future<void> saveAndExit() async {
     String groupName = '';
     bool individual = false;
@@ -380,10 +349,6 @@ class _AppGroupEditorState extends State<AppGroupEditor> {
 
     if (_timetableChanged){
       appGroup.setTimetable(_timetable);
-    }
-
-    if (_dayLengthListChanged) {
-      appGroup.setDayLengthList(_dayLengthList);
     }
 
     await appGroup.save();
