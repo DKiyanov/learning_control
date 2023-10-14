@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:learning_control/check_point_list.dart';
+import 'package:learning_control/parental/time_range_add.dart';
 import 'package:learning_control/parse/parse_check_point.dart';
 import 'app_group_list.dart';
 import 'apps_tuner.dart';
@@ -204,16 +205,34 @@ class _ChildListState extends State<ChildList> {
               ),
             ],
 
-            IconButton(
-              icon: const Icon(Icons.add_task, color: Colors.blue,),
-              onPressed: () async {
-                await EstimateAdd.navigatorPush(context, child);
-                _refresh();
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.add_task, color: Colors.blue),
+              itemBuilder: (context) {
+                return [
+                  TextConst.txtEstimateAdd,
+                  TextConst.txtTimeRangeAdd,
+                ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                )).toList();
+              },
+              onSelected: (value) async {
+                if (value == TextConst.txtEstimateAdd){
+                  await EstimateAdd.navigatorPush(context, child);
+                  _refresh();
+                }
+                if (value == TextConst.txtTimeRangeAdd && mounted){
+                  TimeRangeAdd.navigatorPush(context, child);
+                  _refresh();
+                }
               },
             ),
+
+
           ]),
         ],
       ),
+
       initiallyExpanded: true,
       childrenPadding: const EdgeInsets.only(left: 30.0),
       children: deviceList.where((device) => device.childID == child.objectId ).map((device) {

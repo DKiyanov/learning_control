@@ -149,12 +149,12 @@ class AppGroup extends ParseObject implements ParseCloneable {
   }
 
   /// Расчитываем параметры влияющие на доступность группы зависящие от времени
-  void calcTimeAvailability(int weekDay, int monthDay, int intTime){
-    _calcTimetableAvailability(weekDay, monthDay, intTime);
+  void calcTimeAvailability(int date, int weekDay, int monthDay, int intTime){
+    _calcTimetableAvailability(date, weekDay, monthDay, intTime);
   }
 
   /// Рассчитывает доступность группы по расписанию
-  void _calcTimetableAvailability(int weekDay, int monthDay, int intTime) {
+  void _calcTimetableAvailability(int date, int weekDay, int monthDay, int intTime) {
     getTimetable();
     if (_timetable!.isEmpty) {
       _availableOnTimetable = true;
@@ -162,8 +162,9 @@ class AppGroup extends ParseObject implements ParseCloneable {
     }
 
     final timeRange = _timetable!.firstWhereOrNull((timeRange) =>
-    timeRange.from.intTime <= intTime && timeRange.to.intTime >= intTime &&
-        (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay)
+        timeRange.from.intTime <= intTime && timeRange.to.intTime >= intTime &&
+        (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay) &&
+        (timeRange.dateFrom == null || (date >= timeRange.dateFrom! && date <= timeRange.dateTo!))
     );
 
     final timeRangeHash = _timeRange?.getHash()??'';
@@ -178,13 +179,15 @@ class AppGroup extends ParseObject implements ParseCloneable {
   }
 
   static TimeRange? getTimeRange(DateTime dateTime, List<TimeRange>? timetable) {
+    final date     = dateToInt(dateTime);
     final weekDay  = dateTime.weekday;
     final monthDay = dateTime.day;
     final intTime  = timeToInt(dateTime);
 
     final timeRange = timetable!.firstWhereOrNull((timeRange) =>
-    timeRange.from.intTime <= intTime && timeRange.to.intTime >= intTime &&
-        (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay)
+        timeRange.from.intTime <= intTime && timeRange.to.intTime >= intTime &&
+        (timeRange.day == 0 || timeRange.day == weekDay || timeRange.day == monthDay) &&
+        (timeRange.dateFrom == null || (date >= timeRange.dateFrom! && date <= timeRange.dateTo!))
     );
 
     return timeRange;
@@ -531,12 +534,13 @@ class AppGroupManager {
   _refreshGroupsTimeAvailability() {
     final now = DateTime.now();
 
+    final date     = dateToInt(now);
     final weekDay  = now.weekday;
     final monthDay = now.day;
     final intTime  = timeToInt(now);
 
     for (var group in _appGroupList) {
-      group.calcTimeAvailability(weekDay, monthDay, intTime);
+      group.calcTimeAvailability(date, weekDay, monthDay, intTime);
     }
   }
 

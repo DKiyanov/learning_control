@@ -89,6 +89,12 @@ class TextConst{
   static String txtImageFolder          = 'Каталог с картинками';
   static String txtSelectImageFolder    = 'Выбирите каталог с картинками';
   static String txtSelectFolder         = 'Выбрать каталог';
+  static String txtEstimateAdd         = 'Добавить оценку';
+  static String txtTimeRangeAdd        = 'Добавить временный доступ';
+  static String txtTimeRangeAdding     = 'Добавление временного доступа';
+  static String txtAppGroup            = 'Группа приложений';
+  static String txtTimeRangeAddMsg1    = 'Доступ будет действовать только в текущей дате';
+  static String txtTimeRangeAddMsg2    = 'Выбирите группу приложений';
 
 
   static String errServerUrlEmpty  = 'Не указан адрес сервера';
@@ -190,10 +196,12 @@ class TextConst{
 
   static String txtStatus                             = 'Статус';
   static String txtPeriodicity                        = 'Переодичность';
+  static String txtPeriod                             = 'Период:';
   static String txtDate                               = 'Дата';
   static String txtTime                               = 'Время';
   static String txtFrom                               = 'С';
   static String txtTo                                 = 'По';
+  static String txtDuration                           = 'Длительность';
   static String txtDurationShort                      = 'Длит.';
   static String txtInMinutes                          = 'в минутах';
   static String txtNoticeBeforeMinutes                = 'Предупредить за';
@@ -263,6 +271,14 @@ String getDeviceTypeName(DeviceType deviceType) => _deviceTypeNameMap[deviceType
 
 int dateToInt(DateTime date){
   return date.year * 10000 + date.month * 100 + date.day;
+}
+
+String intDateToStr(int intDate) {
+  final year  = intDate ~/ 10000;
+  final rest  = intDate  % 10000;
+  final month = rest ~/ 100;
+  final day   = rest  % 100;
+  return '${day.toString().padLeft(2, '0')}.${month.toString().padLeft(2, '0')}.$year';
 }
 
 DateTime intDateTimeToDateTime(int intDate, [int intTime = 0]){

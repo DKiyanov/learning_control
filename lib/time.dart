@@ -45,8 +45,10 @@ class TimeRange{
   Time from;
   Time to;
   int  duration; // in minutes
+  int? dateFrom;
+  int? dateTo;
 
-  TimeRange({required this.day, required this.from, required this.to, required this.duration});
+  TimeRange({required this.day, required this.from, required this.to, this.duration = 0, this.dateFrom, this.dateTo});
 
   factory TimeRange.fromJson(Map<String, dynamic> json) {
     return TimeRange(
@@ -54,6 +56,8 @@ class TimeRange{
         from     : Time.fromString(json['from']),
         to       : Time.fromString(json['to']),
         duration : json['duration']??0,
+        dateFrom : json['dateFrom'],
+        dateTo   : json['dateTo'],
     );
   }
 
@@ -63,6 +67,8 @@ class TimeRange{
       'from'     : from.toString(),
       'to'       : to.toString(),
       'duration' : duration,
+      'dateFrom' : dateFrom,
+      'dateTo'   : dateTo,
     };
   }
 

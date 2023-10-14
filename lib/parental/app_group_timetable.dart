@@ -25,6 +25,9 @@ class _TimetableState extends State<Timetable> {
   void initState() {
     super.initState();
 
+    final intDateNow = dateToInt(DateTime.now());
+    widget.timetable.removeWhere((timeRange) => timeRange.dateTo != null && timeRange.dateTo! < intDateNow );
+
     for (int i = 0; i < dayNameList.length; i++){
       dayList.add(
           DropdownMenuItem<int>(
@@ -181,7 +184,7 @@ class _TimetableState extends State<Timetable> {
         children: [
           Text('${TextConst.txtDay}:'),
           Container(width: 4),
-          
+
           Expanded(
             child: DropdownButton<int>(
               isDense: true,
@@ -195,9 +198,82 @@ class _TimetableState extends State<Timetable> {
               items: dayList,
             ),
           ),
+
+          if (timeRange.dateFrom == null) ...[
+            IconButton(
+                onPressed: () async {
+                  final selDate = await _showDatePicker();
+                  if (selDate == null) return;
+                  setState(() {
+                    timeRange.dateFrom = selDate;
+                    timeRange.dateTo   = selDate;
+                  });
+                },
+
+                icon: const Icon(Icons.calendar_month)
+            )
+          ]
           
         ],
       ),
+
+      if (timeRange.dateFrom != null) ...[
+        Row(
+          children: [
+            Text(TextConst.txtPeriod),
+
+            Container(width: 6),
+
+            Expanded(child: ElevatedButton(
+                child: Text(intDateToStr(timeRange.dateFrom!)),
+                onPressed: () async {
+                  final selDate = await _showDatePicker();
+                  if (selDate == null) return;
+
+                  setState(() {
+                    timeRange.dateFrom = selDate;
+                    if (timeRange.dateTo! < timeRange.dateFrom!) {
+                      final dateFrom = timeRange.dateFrom;
+                      timeRange.dateFrom = timeRange.dateTo;
+                      timeRange.dateTo = dateFrom;
+                    }
+                  });
+                }
+            )),
+
+            Container(width: 6),
+
+            Expanded(child: ElevatedButton(
+                child: Text(intDateToStr(timeRange.dateTo!)),
+                onPressed: () async {
+                  final selDate = await _showDatePicker();
+                  if (selDate == null) return;
+
+                  setState(() {
+                    timeRange.dateTo = selDate;
+                    if (timeRange.dateTo! < timeRange.dateFrom!) {
+                      final dateFrom = timeRange.dateFrom;
+                      timeRange.dateFrom = timeRange.dateTo;
+                      timeRange.dateTo = dateFrom;
+                    }
+                  });
+                }
+            )),
+
+            Container(width: 6),
+
+            IconButton(
+                onPressed: () {
+                  setState(() {
+                    timeRange.dateFrom = null;
+                    timeRange.dateTo   = null;
+                  });
+                },
+                icon: const Icon(Icons.free_cancellation, color: Colors.deepOrangeAccent)
+            )
+          ],
+        ),
+      ],
 
       Row(children: [
         Expanded(child: ElevatedButton(
@@ -265,45 +341,57 @@ class _TimetableState extends State<Timetable> {
         day     : 0,
         from    : Time(hour: 0 , minute: 0),
         to      : Time(hour: 24, minute: 0),
-        duration: 0,
       ));
     });
   }
 
-  Future<int> durationInputDialog(BuildContext context, int value) async {
-    final textController = TextEditingController();
-    textController.text = value.toString();
-
-    final dialogResult = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(TextConst.txtWorkingDuration),
-            content: TextField(
-              controller: textController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-              decoration: const InputDecoration( ),
-            ),
-            actions: <Widget>[
-              IconButton(icon: const Icon(Icons.cancel_outlined, color: Colors.deepOrangeAccent), onPressed: (){
-                Navigator.pop(context, false);
-              }),
-
-              IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
-                Navigator.pop(context, true);
-              }),
-
-            ],
-          );
-        });
-
-    if (dialogResult != null && dialogResult){
-      if (textController.text.isEmpty) return 0;
-      return int.parse(textController.text);
-    }
-
-    textController.dispose();
-
-    return value;
+  Future<int?> _showDatePicker() async {
+    final now = DateTime.now();
+    final selDate = await showDatePicker(
+      context     : context,
+      initialDate : now,
+      firstDate   : now,
+      lastDate    : now.add(const Duration(days: 370)),
+    );
+    if (selDate == null) return null;
+    final intDate = dateToInt(selDate);
+    return intDate;
   }
+}
+
+Future<int> durationInputDialog(BuildContext context, int value) async {
+  final textController = TextEditingController();
+  textController.text = value.toString();
+
+  final dialogResult = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(TextConst.txtWorkingDuration),
+          content: TextField(
+            controller: textController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+            decoration: const InputDecoration( ),
+          ),
+          actions: <Widget>[
+            IconButton(icon: const Icon(Icons.cancel_outlined, color: Colors.deepOrangeAccent), onPressed: (){
+              Navigator.pop(context, false);
+            }),
+
+            IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
+              Navigator.pop(context, true);
+            }),
+
+          ],
+        );
+      });
+
+  if (dialogResult != null && dialogResult){
+    if (textController.text.isEmpty) return 0;
+    return int.parse(textController.text);
+  }
+
+  textController.dispose();
+
+  return value;
 }
