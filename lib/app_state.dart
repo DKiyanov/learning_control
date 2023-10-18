@@ -33,8 +33,7 @@ late AppState appState;
 /// Режим работы приложения
 enum UsingMode{
   parent,
-  child,
-  withoutServer,
+  child
 }
 
 enum DeviceType {
@@ -48,6 +47,7 @@ class AppState {
   static const String keyBackGroundImage = 'backGroundImage';
   static const String keyDeviceType      = 'DeviceType';
   static const String keySkipAppList     = 'SkipAppList';
+  static const String _keyFirstConfigOk   = 'FirstConfigOk';
 
   static final AppState _appState = AppState._internal();
 
@@ -63,11 +63,13 @@ class AppState {
   final log = Log();
   late ApplicationsInfo apps;
 
-  bool _firstRun = true;
-  bool get firstRun => _firstRun;
-
   UsingMode? _usingMode;
   UsingMode? get usingMode => _usingMode;
+
+  bool get firstRun => _usingMode == null;
+
+  bool _firstConfigOk = false;
+  bool get firstConfigOk => _firstConfigOk;
 
   late ParseConnect serverConnect;
 
@@ -159,13 +161,13 @@ class AppState {
     final usingModeStr = _prefs!.getString(keyUsingMode)??'';
     _usingMode = UsingMode.values.firstWhereOrNull((usingMode) => usingMode.name == usingModeStr);
 
-    _firstRun = _usingMode == null;
-
     serverConnect = ParseConnect(_prefs!, log);
 
     pinCodeManager = PinCodeManager(_prefs!);
 
-    if (_firstRun) return false;
+    if (_usingMode == null) return false;
+
+    _firstConfigOk =_prefs!.getBool(_keyFirstConfigOk)??false;
 
     _backGroundImageOn = _prefs!.getBool(keyBackGroundImage)??false;
     if (_backGroundImageOn) {
@@ -181,7 +183,7 @@ class AppState {
     await serverConnect.loginFromPrefs();
     if (!serverConnect.loggedIn) return false;
 
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer ) {
+    if (usingMode == UsingMode.child) {
       await serverConnect.initChildDevice();
       await monitoring.readStatus();
     }
@@ -243,6 +245,11 @@ class AppState {
     if (_usingMode != null) return;
     _usingMode = usingMode;
     _prefs!.setString(keyUsingMode,_usingMode!.name);
+  }
+
+  Future<void> setFirstConfig(bool newFirstConfigOk) async {
+    _firstConfigOk = newFirstConfigOk;
+    await _prefs!.setBool(_keyFirstConfigOk, _firstConfigOk);
   }
 
   Future<void> setBackgroundImage(BuildContext context) async {

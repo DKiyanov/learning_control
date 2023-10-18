@@ -138,7 +138,7 @@ class AppSettingsManager {
   Future<void> load(Device device, Child child, UsingMode usingMode) async {
     _device = device;
     _child  = child;
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer){
+    if (usingMode == UsingMode.child){
       return;  // список формируется при вызове synchronize
     }
 
@@ -149,7 +149,7 @@ class AppSettingsManager {
   }
 
   Future<void> save(UsingMode usingMode) async {
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer){
+    if (usingMode == UsingMode.child){
       synchronize();
       return;
     }

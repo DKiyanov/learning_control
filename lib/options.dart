@@ -1,6 +1,5 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learning_control/parental/apps_tuner.dart';
-import 'launcher.dart';
 import 'platform_service.dart';
 import 'package:flutter/material.dart';
 import 'common.dart';
@@ -16,7 +15,8 @@ class Options extends StatefulWidget {
     return Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const Options()));
   }
 
-  const Options({Key? key}) : super(key: key);
+  final VoidCallback? onOptionsOk;
+  const Options({this.onOptionsOk, Key? key}) : super(key: key);
 
   @override
   State<Options> createState() => _OptionsState();
@@ -139,7 +139,6 @@ class _OptionsState extends State<Options> {
         appBar: AppBar(
           centerTitle: true,
           title: Text(TextConst.txtOptions),
-          automaticallyImplyLeading: !appState.firstRun, // При первом запуске из настройки можно выйти только в перёд - кнопку назад убрал
         ),
 
         body: ListView(
@@ -206,62 +205,14 @@ class _OptionsState extends State<Options> {
             ),
 
             // Поле ввода "Имя ребёнка"
-            if (appState.usingMode != UsingMode.withoutServer) ...[
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: TextField(
-                  controller: _textControllerChildName,
-                  readOnly: !_serverAvailable,
-                  decoration: InputDecoration(
-                      filled: true,
-                      labelText: TextConst.txtChildName,
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(width: 3, color: Colors.blueGrey),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(width: 3, color: Colors.blue),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      suffixIcon: _childNameList.isNotEmpty?
-                        PopupMenuButton<String>(
-                          itemBuilder: (context) {
-                            return _childNameList.map<PopupMenuItem<String>>((childName) => PopupMenuItem<String>(
-                              value: childName,
-                              child: Text(childName),
-                            )).toList();
-                          },
-                          onSelected: (childName){
-                            setState(() {
-                              _textControllerChildName.text = childName != TextConst.txtAddNewChild?childName:'';
-                              _addNewChild = false;
-                              _selChild    = null;
-                              if (childName == TextConst.txtAddNewChild){
-                                _addNewChild = true;
-                              } else {
-                                _selChild = _childList.firstWhere((child) => child.name == childName);
-                              }
-                            });
-                          },
-                        ): null
-                  ),
-                  onChanged: ((_) {
-                    setState(() { });
-                  }),
-                ),
-              ),
-            ],
-
-            if (appState.usingMode != UsingMode.withoutServer) ...[
-              // Поле ввода "Имя устройства"
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: TextField(
-                  controller: _textControllerDeviceName,
-                  readOnly: !_serverAvailable,
-                  decoration: InputDecoration(
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextField(
+                controller: _textControllerChildName,
+                readOnly: !_serverAvailable,
+                decoration: InputDecoration(
                     filled: true,
-                    labelText: TextConst.txtDeviceName,
+                    labelText: TextConst.txtChildName,
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(width: 3, color: Colors.blueGrey),
                       borderRadius: BorderRadius.circular(15),
@@ -270,52 +221,97 @@ class _OptionsState extends State<Options> {
                       borderSide: const BorderSide(width: 3, color: Colors.blue),
                       borderRadius: BorderRadius.circular(15),
                     ),
-                      
-                    suffixIcon: _deviceNameList.isNotEmpty?
-                    PopupMenuButton<String>(
-                      itemBuilder: (context) {
-                        return _deviceNameList.map<PopupMenuItem<String>>((deviceName) => PopupMenuItem<String>(
-                          value: deviceName,
-                          child: Text(deviceName),
-                        )).toList();
-                      },
-                      onSelected: (deviceName){
-                        setState(() {
-                          _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice?deviceName:'';
-                          _addNewDevice = false;
-                          _selDevice    = null;
-                          if (deviceName == TextConst.txtAddNewDevice){
-                            _addNewDevice = true;
-                          } else {
-                            _selDevice = _deviceList.firstWhere((device) => device.name == deviceName);
-                          }
-                        });
-                      },
-                    ): null
-                      
-                  ),
-                  onChanged: ((_) {
-                    setState(() { });
-                  }),
+                    suffixIcon: _childNameList.isNotEmpty?
+                      PopupMenuButton<String>(
+                        itemBuilder: (context) {
+                          return _childNameList.map<PopupMenuItem<String>>((childName) => PopupMenuItem<String>(
+                            value: childName,
+                            child: Text(childName),
+                          )).toList();
+                        },
+                        onSelected: (childName){
+                          setState(() {
+                            _textControllerChildName.text = childName != TextConst.txtAddNewChild?childName:'';
+                            _addNewChild = false;
+                            _selChild    = null;
+                            if (childName == TextConst.txtAddNewChild){
+                              _addNewChild = true;
+                            } else {
+                              _selChild = _childList.firstWhere((child) => child.name == childName);
+                            }
+                          });
+                        },
+                      ): null
                 ),
+                onChanged: ((_) {
+                  setState(() { });
+                }),
               ),
+            ),
 
-              // Выбор типа устройства
-              ListTile(
-                title: Text(TextConst.txtDeviceType),
-                trailing: DropdownButton<DeviceType>(
-                    value: appState.deviceType,
-                    items: DeviceType.values.map<DropdownMenuItem<DeviceType>>((deviceType) => DropdownMenuItem<DeviceType>(
-                      value: deviceType,
-                      child: Text(getDeviceTypeName(deviceType)),
-                    )).toList(),
-                    onChanged: (deviceType){
-                      appState.deviceType = deviceType!;
-                      setState((){ });
-                    }
+            // Поле ввода "Имя устройства"
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextField(
+                controller: _textControllerDeviceName,
+                readOnly: !_serverAvailable,
+                decoration: InputDecoration(
+                  filled: true,
+                  labelText: TextConst.txtDeviceName,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(width: 3, color: Colors.blueGrey),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(width: 3, color: Colors.blue),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+
+                  suffixIcon: _deviceNameList.isNotEmpty?
+                  PopupMenuButton<String>(
+                    itemBuilder: (context) {
+                      return _deviceNameList.map<PopupMenuItem<String>>((deviceName) => PopupMenuItem<String>(
+                        value: deviceName,
+                        child: Text(deviceName),
+                      )).toList();
+                    },
+                    onSelected: (deviceName){
+                      setState(() {
+                        _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice?deviceName:'';
+                        _addNewDevice = false;
+                        _selDevice    = null;
+                        if (deviceName == TextConst.txtAddNewDevice){
+                          _addNewDevice = true;
+                        } else {
+                          _selDevice = _deviceList.firstWhere((device) => device.name == deviceName);
+                        }
+                      });
+                    },
+                  ): null
+
                 ),
+                onChanged: ((_) {
+                  setState(() { });
+                }),
               ),
-            ],
+            ),
+
+            // Выбор типа устройства
+            ListTile(
+              title: Text(TextConst.txtDeviceType),
+              trailing: DropdownButton<DeviceType>(
+                  value: appState.deviceType,
+                  items: DeviceType.values.map<DropdownMenuItem<DeviceType>>((deviceType) => DropdownMenuItem<DeviceType>(
+                    value: deviceType,
+                    child: Text(getDeviceTypeName(deviceType)),
+                  )).toList(),
+                  onChanged: (deviceType){
+                    appState.deviceType = deviceType!;
+                    setState((){ });
+                  }
+              ),
+            ),
+
 
             // Поле ввода "Пин код"
             Padding(
@@ -397,7 +393,7 @@ class _OptionsState extends State<Options> {
                 || _textControllerDeviceName.text != _oldDeviceName
             ) ...[
               Padding(
-                padding: const EdgeInsets.all(15.0),
+                padding: const EdgeInsets.only(left: 15, right: 15),
                 child: ElevatedButton(
                   onPressed: applyChanges,
                   child: Text(TextConst.txtApplyChanges)
@@ -409,7 +405,7 @@ class _OptionsState extends State<Options> {
             // Кнопка "Настройка приложений"
             if (_child != null && _device != null ) ...[
               Padding(
-                  padding: const EdgeInsets.all(15.0),
+                  padding: const EdgeInsets.only(left: 15, right: 15),
                   child: ElevatedButton(
                       onPressed: showAppsTunerPage,
                       child: Text(TextConst.txtAppsSetup)
@@ -418,11 +414,14 @@ class _OptionsState extends State<Options> {
             ],
 
             // Кнопка "Дальше"
-            if ( appState.firstRun ) ...[
+            if ( widget.onOptionsOk != null ) ...[
               Padding(
-                  padding: const EdgeInsets.all(15.0),
+                  padding: const EdgeInsets.only(left: 15, right: 15),
                   child: ElevatedButton(
-                      onPressed: ((_child != null && _device != null ))? firstRunShowLauncher : null,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      onPressed: ((_child != null && _device != null ))? (){
+                        widget.onOptionsOk!.call();
+                      } : null,
                       child: Text(TextConst.txtNext)
                   )
               ),
@@ -527,9 +526,5 @@ class _OptionsState extends State<Options> {
     await appState.serverConnect.synchronize(showErrorToast: true, ignoreShortTime: false);
     if (!mounted) return;
     AppsTuner.navigatorPush(context, _child!, _device!);
-  }
-
-  void firstRunShowLauncher() {
-    Launcher.navigatorSet(context);
   }
 }

@@ -140,23 +140,12 @@ class ParseConnect {
   Future<bool> _connectToServer(String url, String login, String password, ConnectMode mode) async {
     lastError = '';
 
-    if (appState.usingMode == UsingMode.withoutServer){
-      url = TextConst.defaultURL;
-    }
-
     await Parse().initialize(
         _applicationId,
         url,
         debug: true,
         coreStore: await CoreStoreSharedPrefsImp.getInstance()
     );
-
-    if (appState.usingMode == UsingMode.withoutServer){
-      _user = ParseUser(login, password, login);
-      _user!.objectId = login;
-      await _user!.pin();
-      return true;
-    }
 
     // if (!(await Parse().healthCheck()).success){
     //   print('healthCheck invalid');

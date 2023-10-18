@@ -103,7 +103,7 @@ class AppManager {
 
   /// возвращает список приложений
   Future<List<DevApp>> getObjectList(Device device, Child child, UsingMode usingMode) async {
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer) {
+    if (usingMode == UsingMode.child) {
       final appList = appState.apps.appList;
 
       return appList.map((app){
@@ -115,7 +115,7 @@ class AppManager {
   }
 
   Future<Uint8List?> getAppIcon(Device device, String packageName, UsingMode usingMode) async {
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer) {
+    if (usingMode == UsingMode.child) {
       return appState.apps.getApp(packageName)!.icon;
     }
 

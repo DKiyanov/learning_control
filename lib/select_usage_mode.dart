@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'parental/child_list.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'common.dart';
 import 'app_state.dart';
-import 'options.dart';
 
 class UsingModeSelector extends StatefulWidget {
-  static Future<Object?> navigatorPush(BuildContext context) async {
-    return Navigator.push(context, MaterialPageRoute(builder: (_) => const UsingModeSelector() ));
-  }
-
-  const UsingModeSelector({Key? key}) : super(key: key);
+  final VoidCallback onUsingModeSelectOk;
+  const UsingModeSelector({required this.onUsingModeSelectOk, Key? key}) : super(key: key);
 
   @override
   State<UsingModeSelector> createState() => _UsingModeSelectorState();
@@ -71,14 +67,11 @@ class _UsingModeSelectorState extends State<UsingModeSelector> {
   }
 
   Future<void> proceed() async {
-    appState.setUsingMode(_usingMode!);
-
-    if (_usingMode == UsingMode.parent){
-      ChildList.navigatorPushReplacement(context);
-    }
-
-    if (_usingMode == UsingMode.child){
-      Options.navigatorPushReplacement(context);
+    try {
+      appState.setUsingMode(_usingMode!);
+      widget.onUsingModeSelectOk.call();
+    } catch(e) {
+      Fluttertoast.showToast(msg: e.toString());
     }
   }
 }

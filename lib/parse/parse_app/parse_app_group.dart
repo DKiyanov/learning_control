@@ -443,7 +443,7 @@ class AppGroupManager {
   /// Возвращает список всех групп
   Future<List<AppGroup>> getObjectList(ParseUser user, UsingMode usingMode) async {
     _user = user;
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer){
+    if (usingMode == UsingMode.child){
       return _appGroupList;
     }
 
@@ -457,7 +457,7 @@ class AppGroupManager {
   }
 
   Future<void> save(UsingMode usingMode) async {
-    if (usingMode == UsingMode.child || usingMode == UsingMode.withoutServer){
+    if (usingMode == UsingMode.child){
       await synchronize();
       return;
     }

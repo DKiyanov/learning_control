@@ -135,11 +135,12 @@ class _BackGroundImageDialogState extends State<BackGroundImageDialog> {
                   child       : Image.file( imgFile ),
                   menuItemList: [
                     PopupMenuItem<String>(
+                      value: path,
                       child: Text(TextConst.txtSetBackgroundImage),
                     )
                   ],
-                  onSelect: (_) {
-                    Navigator.pop(context, path);
+                  onSelect: (value) {
+                    Navigator.pop(context, value);
                   }
                 );
 

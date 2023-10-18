@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learning_control/platform_service.dart';
+import 'package:learning_control/select_usage_mode.dart';
+import 'options.dart';
 import 'parental/child_list.dart';
 import 'common.dart';
 import 'login.dart';
@@ -16,7 +18,8 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> {
   bool _isStarting = true;
-  Widget? _screen;
+  bool _sessionOk = false;
+  bool _firstRun  = false;
 
   @override
   void initState() {
@@ -30,11 +33,21 @@ class _StartPageState extends State<StartPage> {
   void _starting() async {
     try {
       await AppState().initialization();
-      _screen = await getScreenWidget();
+
+      _firstRun = appState.usingMode == null;
+
+      if (_firstRun) {
+        if (appState.usingMode == UsingMode.parent) {
+          if (appState.serverConnect.loggedIn) {
+            _sessionOk = await appState.serverConnect.sessionHealthCheck();
+          }
+        }
+      }
 
       setState(() {
         _isStarting = false;
       });
+
     } catch (e) {
       await appState.prefs.clear();
       Fluttertoast.showToast(msg: TextConst.txtInvalidInstallation);
@@ -43,20 +56,33 @@ class _StartPageState extends State<StartPage> {
     }
   }
 
-  Future<Widget> getScreenWidget() async {
-    if (appState.firstRun) {
-      return const Login();
+  Widget getScreenWidget() {
+    if (appState.usingMode == null) {
+      if (!appState.serverConnect.loggedIn) {
+        return login();
+      }
+
+      return UsingModeSelector(onUsingModeSelectOk: () {
+        setState(() {});
+      });
+    }
+
+    if (appState.usingMode == UsingMode.child && !appState.firstConfigOk){
+      return Options( onOptionsOk: (){
+        appState.setFirstConfig(true);
+        setState(() {});
+      });
     }
 
     if (appState.usingMode == UsingMode.parent) {
       if (appState.serverConnect.loggedIn) {
-        if (await appState.serverConnect.sessionHealthCheck()) {
+        if (_sessionOk) {
           return const ChildList();
         } else {
-          return const Login();
+          return login();
         }
       } else {
-        return const Login();
+        return login();
       }
     }
 
@@ -64,7 +90,13 @@ class _StartPageState extends State<StartPage> {
       return const Launcher();
     }
 
-    return const Login();
+    return login();
+  }
+
+  Widget login() {
+    return Login( onLoginOk: (){
+      setState(() {});
+    });
   }
 
   @override
@@ -83,7 +115,7 @@ class _StartPageState extends State<StartPage> {
       );
     }
 
-    return _screen!;
+    return getScreenWidget();
   }
 
 }
