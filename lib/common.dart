@@ -95,7 +95,17 @@ class TextConst{
   static String txtAppGroup            = 'Группа приложений';
   static String txtTimeRangeAddMsg1    = 'Доступ будет действовать только в текущей дате';
   static String txtTimeRangeAddMsg2    = 'Выбирите группу приложений';
-
+  static String txtInvite              = 'Приглашение';
+  static String txtInviteExpiration1   = 'Приглашение будет действовать';
+  static String txtInviteExpiration2   = 'минут';
+  static String txtInviteExpiration3   = 'до';
+  static String txtInviteForChildTitle = 'для Ребёнка';
+  static String txtInviteChild         = 'Пригласить ребёнка';
+  static String txtInviteParent         = 'Пригласить другого родителя';
+  static String txtInviteForChildText  = 'введите этот код на устройстве ребёнка при установке приложения или при входе в настройки';
+  static String txtInviteForParentTitle = 'для Родителя';
+  static String txtInviteForParentText  = 'введите этот код на устройстве другого родителя при установке приложения или при повторном входе';
+  static String txtInviteCopied         = 'Код скопирован в буффер обмена';
 
   static String errServerUrlEmpty  = 'Не указан адрес сервера';
   static String errServerUnavailable  = 'Сервер недоступен';
@@ -106,7 +116,7 @@ class TextConst{
 
 
   static String msgAppGroup1  = 'Есть другая группа с именем';
-  static String msgChildList1  = 'Ещё нет ни одного ребёнка, /nСначала выполните настройку на устройстве ребёнка';
+  static String msgChildList1  = 'Ещё нет ни одного ребёнка, \nВыбирите пункт меню "Пригласить ребёнка"';
 
   static String txtIgnoringBatteryOptimizationsTitle = 'Игнорирование оптмизации расхода энергии';
   static String txtIgnoringBatteryOptimizationsText  = 'Для того чтобы это приложение не закрывалось системой для оптимизации расхода заряда батареи';
@@ -368,11 +378,17 @@ final dayNameList = <String>[
   TextConst.txtTtMonth31  ,
 ];
 
-Widget longPressMenu<T>({
+class SimpleMenuItem {
+  final Widget child;
+  final VoidCallback onPress;
+
+  SimpleMenuItem({required this.child, required this.onPress});
+}
+
+Widget longPressMenu({
   required BuildContext context,
   required Widget child,
-  required List<PopupMenuEntry<T>> menuItemList,
-  PopupMenuItemSelected? onSelect
+  required List<SimpleMenuItem> menuItemList
 }) {
 
   return GestureDetector(
@@ -381,16 +397,38 @@ Widget longPressMenu<T>({
       final renderBox = Overlay.of(context)?.context.findRenderObject() as RenderBox;
       final tapPosition = renderBox.globalToLocal(details.globalPosition);
 
-      final value = await showMenu<T>(
+      final menuEntryList =  menuItemList.map<PopupMenuItem<VoidCallback>>((menuItem) => PopupMenuItem(
+        value: menuItem.onPress,
+        child: menuItem.child,
+      )).toList();
+
+      final value = await showMenu<VoidCallback>(
         context: context,
         position: RelativeRect.fromLTRB(tapPosition.dx, tapPosition.dy, tapPosition.dx, tapPosition.dy),
-        items: menuItemList,
+        items: menuEntryList,
       );
 
-      if (value != null && onSelect != null) {
-        onSelect.call(value);
+      if (value != null) {
+        value.call();
       }
     },
   );
+}
 
+Widget popupMenu({
+  required Icon icon,
+  required List<SimpleMenuItem> menuItemList
+}){
+  return PopupMenuButton<VoidCallback>(
+    icon: icon,
+    itemBuilder: (context) {
+      return menuItemList.map<PopupMenuItem<VoidCallback>>((menuItem) => PopupMenuItem<VoidCallback>(
+        value: menuItem.onPress,
+        child: menuItem.child,
+      )).toList();
+    },
+    onSelected: (value) async {
+      value.call();
+    },
+  );
 }

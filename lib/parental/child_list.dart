@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:learning_control/check_point_list.dart';
 import 'package:learning_control/parental/time_range_add.dart';
 import 'package:learning_control/parse/parse_check_point.dart';
+import '../show_invite_key.dart';
 import 'app_group_list.dart';
 import 'apps_tuner.dart';
 import 'coin_list.dart';
@@ -98,7 +99,7 @@ class _ChildListState extends State<ChildList> {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text(TextConst.txtChildrenDevices),
+          title: Text(TextConst.txtChildrenDevices)
         ),
 
         body: SafeArea(
@@ -117,6 +118,26 @@ class _ChildListState extends State<ChildList> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(TextConst.txtChildrenDevices),
+        actions: [
+          popupMenu(
+              icon: const Icon(Icons.menu),
+              menuItemList: [
+                SimpleMenuItem(
+                    child: Text(TextConst.txtInviteChild),
+                    onPress: () {
+                      Invite.navigatorPush(context, const Duration(minutes: 30), forChild: true);
+                    }
+                ),
+
+                SimpleMenuItem(
+                    child: Text(TextConst.txtInviteParent),
+                    onPress: () {
+                      Invite.navigatorPush(context, const Duration(minutes: 30), forParent: true);
+                    }
+                ),
+              ]
+          )
+        ],
       ),
 
       body: SafeArea(

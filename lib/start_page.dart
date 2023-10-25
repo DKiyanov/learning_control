@@ -19,7 +19,6 @@ class StartPage extends StatefulWidget {
 class _StartPageState extends State<StartPage> {
   bool _isStarting = true;
   bool _sessionOk = false;
-  bool _firstRun  = false;
 
   @override
   void initState() {
@@ -34,13 +33,9 @@ class _StartPageState extends State<StartPage> {
     try {
       await AppState().initialization();
 
-      _firstRun = appState.usingMode == null;
-
-      if (_firstRun) {
-        if (appState.usingMode == UsingMode.parent) {
-          if (appState.serverConnect.loggedIn) {
-            _sessionOk = await appState.serverConnect.sessionHealthCheck();
-          }
+      if (appState.usingMode == UsingMode.parent) {
+        if (appState.serverConnect.loggedIn) {
+          _sessionOk = await appState.serverConnect.sessionHealthCheck();
         }
       }
 

@@ -130,20 +130,18 @@ class _BackGroundImageDialogState extends State<BackGroundImageDialog> {
                 final path = _fileList[index];
                 final imgFile = File(path);
 
-                return longPressMenu<String>(
+                return longPressMenu(
                   context     : context,
                   child       : Image.file( imgFile ),
                   menuItemList: [
-                    PopupMenuItem<String>(
-                      value: path,
+                    SimpleMenuItem(
                       child: Text(TextConst.txtSetBackgroundImage),
+                      onPress: () {
+                        Navigator.pop(context, path);
+                      }
                     )
                   ],
-                  onSelect: (value) {
-                    Navigator.pop(context, value);
-                  }
                 );
-
               }
             )
         ),

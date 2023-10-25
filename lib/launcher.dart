@@ -134,18 +134,17 @@ class _LauncherState extends State<Launcher> {
       appIconWidget = Image.memory(app.icon);
     }
 
-    final items = <PopupMenuEntry<String>>[];
+    final items = <SimpleMenuItem>[];
     items.addAll([
-      PopupMenuItem<String>(
-        value: TextConst.txtDelete,
+      SimpleMenuItem(
         child: Text(TextConst.txtDelete),
-        onTap: (){
+        onPress: (){
           appState.deleteApp(app.packageName).then((value) => _refresh());
         },
       )
     ]);
 
-    final appIconWidgetEx = longPressMenu<String>(
+    final appIconWidgetEx = longPressMenu(
       context     : context,
       child       : appIconWidget!,
       menuItemList: items,
