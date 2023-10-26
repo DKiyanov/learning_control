@@ -222,26 +222,24 @@ class _OptionsState extends State<Options> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                     suffixIcon: _childNameList.isNotEmpty?
-                      PopupMenuButton<String>(
-                        itemBuilder: (context) {
-                          return _childNameList.map<PopupMenuItem<String>>((childName) => PopupMenuItem<String>(
-                            value: childName,
-                            child: Text(childName),
-                          )).toList();
-                        },
-                        onSelected: (childName){
-                          setState(() {
-                            _textControllerChildName.text = childName != TextConst.txtAddNewChild?childName:'';
-                            _addNewChild = false;
-                            _selChild    = null;
-                            if (childName == TextConst.txtAddNewChild){
-                              _addNewChild = true;
-                            } else {
-                              _selChild = _childList.firstWhere((child) => child.name == childName);
-                            }
-                          });
-                        },
-                      ): null
+                    popupMenu(
+                        icon: const Icon(Icons.menu),
+                        menuItemList: _childNameList.map<SimpleMenuItem>((childName) => SimpleMenuItem(
+                          child: Text(childName),
+                          onPress: () {
+                            setState(() {
+                              _textControllerChildName.text = childName != TextConst.txtAddNewChild?childName:'';
+                              _addNewChild = false;
+                              _selChild    = null;
+                              if (childName == TextConst.txtAddNewChild){
+                                _addNewChild = true;
+                              } else {
+                                _selChild = _childList.firstWhere((child) => child.name == childName);
+                              }
+                            });
+                          }
+                        )).toList()
+                    ): null
                 ),
                 onChanged: ((_) {
                   setState(() { });
@@ -268,25 +266,23 @@ class _OptionsState extends State<Options> {
                   ),
 
                   suffixIcon: _deviceNameList.isNotEmpty?
-                  PopupMenuButton<String>(
-                    itemBuilder: (context) {
-                      return _deviceNameList.map<PopupMenuItem<String>>((deviceName) => PopupMenuItem<String>(
-                        value: deviceName,
+                  popupMenu(
+                      icon: const Icon(Icons.menu),
+                      menuItemList: _deviceNameList.map<SimpleMenuItem>((deviceName) => SimpleMenuItem(
                         child: Text(deviceName),
-                      )).toList();
-                    },
-                    onSelected: (deviceName){
-                      setState(() {
-                        _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice?deviceName:'';
-                        _addNewDevice = false;
-                        _selDevice    = null;
-                        if (deviceName == TextConst.txtAddNewDevice){
-                          _addNewDevice = true;
-                        } else {
-                          _selDevice = _deviceList.firstWhere((device) => device.name == deviceName);
+                        onPress: () {
+                          setState(() {
+                            _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice?deviceName:'';
+                            _addNewDevice = false;
+                            _selDevice    = null;
+                            if (deviceName == TextConst.txtAddNewDevice){
+                              _addNewDevice = true;
+                            } else {
+                              _selDevice = _deviceList.firstWhere((device) => device.name == deviceName);
+                            }
+                          });
                         }
-                      });
-                    },
+                      )).toList()
                   ): null
 
                 ),

@@ -8,6 +8,7 @@ class TextConst{
 
   static String txtStarting       = 'Запуск';
   static String txtLoading        = 'Загрузка';
+  static String txtConnecting     = 'Подключение к серверу';
   static String txtEntryToOptions = 'Вход в настройку';
   static String txtServerURL      = 'Адрес сервера';
   static String txtWithoutServer  = 'Без сервера';

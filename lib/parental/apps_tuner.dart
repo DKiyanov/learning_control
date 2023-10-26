@@ -130,37 +130,36 @@ class _AppsTunerState extends State<AppsTuner> {
             ),
           ]),
           actions: [
-            PopupMenuButton<String>(
+            popupMenu(
               icon: const Icon(Icons.menu),
-              itemBuilder: (context) {
-                return [
-                  TextConst.txtAppGroupsTuning,
-                  if (_massAssign) ...[
-                    TextConst.txtSingleAssignAppGroup,
-                  ] else ...[
-                    TextConst.txtMassAssignAppGroup,
-                  ]
-                ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                )).toList();
-              },
-              onSelected: (value) async {
-                if (value == TextConst.txtAppGroupsTuning) {
-                  editGroups();
-                }
-                if (value == TextConst.txtMassAssignAppGroup) {
-                  setState(() {
-                    _massAssign = true;
-                  });
-                }
-                if (value == TextConst.txtSingleAssignAppGroup) {
-                  setState(() {
-                    _massAssign = false;
-                  });
-                }
-              },
+              menuItemList: [
+                SimpleMenuItem(
+                  child: Text(TextConst.txtAppGroupsTuning),
+                  onPress: ()=> editGroups(),
+                ),
+
+                if (_massAssign) ...[
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtSingleAssignAppGroup),
+                      onPress: () {
+                        setState(() {
+                          _massAssign = false;
+                        });
+                      }
+                  ),
+                ] else ...[
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtMassAssignAppGroup),
+                      onPress: () {
+                        setState(() {
+                          _massAssign = true;
+                        });
+                      }
+                  ),
+                ]
+              ],
             ),
+
             IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: ()=> saveAndExit() )
           ],
         ),
@@ -187,31 +186,30 @@ class _AppsTunerState extends State<AppsTuner> {
             child: Row(
               children: [
                 Expanded(child: Text(TextConst.txtSelGroupForApp)),
-                PopupMenuButton<String>(
-                  itemBuilder: (context) {
-                    return _groupNameList.where((item) => item != TextConst.txtAddIndividualGroup).map<PopupMenuItem<String>>((appGroupName) => PopupMenuItem<String>(
-                      value: appGroupName,
-                      child: Text(appGroupName),
-                    )).toList();
-                  },
-                  onSelected: (appGroupName) async {
-                    AppGroup? appGroup;
 
-                    if (appGroupName == TextConst.txtAddNewGroup) {
-                      appGroup = await addNewAppGroup();
-                    } else {
-                      appGroup = _groupList.firstWhere((appGroup) => appGroup.name == appGroupName);
-                    }
+                popupMenu(
+                  icon: const Icon(Icons.menu),
+                  menuItemList: _groupNameList.where((item) => item != TextConst.txtAddIndividualGroup).map<SimpleMenuItem>((appGroupName) => SimpleMenuItem(
+                    child: Text(appGroupName),
+                    onPress: () async {
+                      AppGroup? appGroup;
 
-                    if (appGroup != null) {
-                      final appList = List<DevApp>.from(_multiSelectList);
-                      _multiSelectList.clear();
-                      for (var app in appList) {
-                        appState.appSettingsManager.setAppGroup(app.packageName, appGroup);
+                      if (appGroupName == TextConst.txtAddNewGroup) {
+                        appGroup = await addNewAppGroup();
+                      } else {
+                        appGroup = _groupList.firstWhere((appGroup) => appGroup.name == appGroupName);
                       }
-                      _eventRefreshApp.sendFor(appList);
+
+                      if (appGroup != null) {
+                        final appList = List<DevApp>.from(_multiSelectList);
+                        _multiSelectList.clear();
+                        for (var app in appList) {
+                          appState.appSettingsManager.setAppGroup(app.packageName, appGroup);
+                        }
+                        _eventRefreshApp.sendFor(appList);
+                      }
                     }
-                  },
+                  )).toList(),
                 ),
               ],
             ),
@@ -260,30 +258,28 @@ class _AppsTunerState extends State<AppsTuner> {
 
     Widget? trailing;
     if (!_massAssign){
-      trailing = PopupMenuButton<String>(
-        itemBuilder: (context) {
-          return _groupNameList.map<PopupMenuItem<String>>((appGroupName) => PopupMenuItem<String>(
-            value: appGroupName,
+      trailing  = popupMenu(
+          icon: const Icon(Icons.menu),
+          menuItemList: _groupNameList.map<SimpleMenuItem>((appGroupName) => SimpleMenuItem(
             child: Text(appGroupName),
-          )).toList();
-        },
-        onSelected: (appGroupName) async {
-          AppGroup? appGroup;
+            onPress: () async {
+              AppGroup? appGroup;
 
-          if (appGroupName == TextConst.txtAddNewGroup) {
-            appGroup = await addNewAppGroup();
-          }
-          if (appGroupName == TextConst.txtAddIndividualGroup) {
-            appGroup = await addNewAppGroup(app.packageName);
-          }
+              if (appGroupName == TextConst.txtAddNewGroup) {
+                appGroup = await addNewAppGroup();
+              }
+              if (appGroupName == TextConst.txtAddIndividualGroup) {
+                appGroup = await addNewAppGroup(app.packageName);
+              }
 
-          appGroup ??= _groupList.firstWhereOrNull((appGroup) => appGroup.name == appGroupName);
+              appGroup ??= _groupList.firstWhereOrNull((appGroup) => appGroup.name == appGroupName);
 
-          if (appGroup != null) {
-            appState.appSettingsManager.setAppGroup(app.packageName, appGroup);
-            _eventRefreshApp.sendFor([app]);
-          }
-        },
+              if (appGroup != null) {
+                appState.appSettingsManager.setAppGroup(app.packageName, appGroup);
+                _eventRefreshApp.sendFor([app]);
+              }
+            }
+          )).toList()
       );
     } else {
       trailing = StatefulBuilder( builder: (context, checkBoxSetState) {
@@ -393,25 +389,19 @@ class _AppsTunerState extends State<AppsTuner> {
                     children: [
 
                       // Меню фильтра
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.arrow_drop_down),
-                        itemBuilder: (context) {
-                          return _getFilterMenuList().map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                            value: value,
+                      popupMenu(
+                          icon: const Icon(Icons.arrow_drop_down),
+                          menuItemList: _getFilterMenuList().map<SimpleMenuItem>((value) => SimpleMenuItem(
                             child: Text(value),
-                          )).toList();
-                        },
-
-                        onSelected: (value) {
-                          setState((){
-                            _filterMode = value;
-                            _textControllerFilter.clear();
-                            _setFilter('');
-                          });
-
-                        },
+                            onPress: () {
+                              setState((){
+                                _filterMode = value;
+                                _textControllerFilter.clear();
+                                _setFilter('');
+                              });
+                            }
+                          )).toList()
                       ),
-
                     ],
                   )
               ),

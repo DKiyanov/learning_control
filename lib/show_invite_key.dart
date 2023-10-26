@@ -142,7 +142,10 @@ class _InviteState extends State<Invite> {
                   await Clipboard.setData(ClipboardData(text: inviteStr));
                   Fluttertoast.showToast(msg: TextConst.txtInviteCopied);
                 },
-                child: const Icon(Icons.copy),
+                child: const Padding(
+                  padding: EdgeInsets.only(top: 13, bottom: 13),
+                  child: Icon(Icons.copy),
+                ),
               )
             ],
           ),

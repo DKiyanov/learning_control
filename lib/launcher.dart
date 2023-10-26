@@ -41,7 +41,7 @@ class _LauncherState extends State<Launcher> {
 
   final _bottomAppWidgetList = <Widget>[];
   final _topAppWidgetList    = <Widget>[];
-  final _menuAppWidgetList   = <PopupMenuItem<String>>[];
+  final _menuAppWidgetList   = <SimpleMenuItem>[];
 
   bool _isStarting = true;
   bool _synchronization = false;
@@ -212,13 +212,13 @@ class _LauncherState extends State<Launcher> {
     }
     if (appGroup.name == TextConst.txtGroupMenu) {
       _menuAppWidgetList.add(
-        PopupMenuItem<String>(
+        SimpleMenuItem(
           child: Row( children: [
             SizedBox(height: IconTheme.of(context).size, child: Image.memory(app.icon)),
             Container(width: 6),
             Text(app.appName),
           ]),
-          onTap: ()=> _openApp(app.packageName),
+          onPress: ()=> _openApp(app.packageName),
         )
       );
       return;
@@ -331,42 +331,39 @@ class _LauncherState extends State<Launcher> {
           bottomNavigationBar: BottomAppBar(
             color: Colors.transparent,
             child: Row(children: [
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.menu, color: Colors.blue),
-                itemBuilder: (context) {
-                  final menuItemList = [
-                    TextConst.txtAppFilterShow,
-                    TextConst.txtCheckPointList,
-                    TextConst.txtParentalMenu,
-                  ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  )).toList();
+              popupMenu(
+                  icon: const Icon(Icons.menu, color: Colors.blue),
+                  menuItemList: [
+                    SimpleMenuItem(
+                        child: Text(TextConst.txtAppFilterShow),
+                        onPress: () {
+                          setState(() {
+                            _appFilterList.clear();
+                            _appFilterList.addAll(_appOrderList);
+                            _filterOn = true;
+                            _filterMode = TextConst.txtAppManualFilter;
+                          });
+                        }
+                    ),
 
-                  menuItemList.addAll(_menuAppWidgetList);
-                  return menuItemList;
-                },
+                    SimpleMenuItem(
+                        child: Text(TextConst.txtCheckPointList),
+                        onPress: () {
+                          CheckPointList.navigatorPush(context, appState.childManager.child, true);
+                        }
+                    ),
 
-                onSelected: (value) async {
-                  if (value == TextConst.txtParentalMenu) {
-                    ParentalMenu.navigatorPush(context).then((value) {
-                      if (mounted) _refresh();
-                    });
-                  }
+                    SimpleMenuItem(
+                        child: Text(TextConst.txtParentalMenu),
+                        onPress: () {
+                          ParentalMenu.navigatorPush(context).then((value) {
+                            if (mounted) _refresh();
+                          });
+                        }
+                    ),
 
-                  if (value == TextConst.txtCheckPointList){
-                    CheckPointList.navigatorPush(context, appState.childManager.child, true);
-                  }
-
-                  if (value == TextConst.txtAppFilterShow){
-                    setState(() {
-                      _appFilterList.clear();
-                      _appFilterList.addAll(_appOrderList);
-                      _filterOn = true;
-                      _filterMode = TextConst.txtAppManualFilter;
-                    });
-                  }
-                },
+                    ... _menuAppWidgetList,
+                  ]
               ),
 
               // Баланс:
@@ -469,23 +466,18 @@ class _LauncherState extends State<Launcher> {
                     children: [
 
                       // Меню фильтра
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.arrow_drop_down),
-                        itemBuilder: (context) {
-                          return _getFilterMenuList().map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                            value: value,
+                      popupMenu(
+                          icon: const Icon(Icons.arrow_drop_down),
+                          menuItemList: _getFilterMenuList().map<SimpleMenuItem>((value) => SimpleMenuItem(
                             child: Text(value),
-                          )).toList();
-                        },
-
-                        onSelected: (value) {
-                          setState((){
-                            _filterMode = value;
-                            _textControllerFilter.clear();
-                            _setFilter('');
-                          });
-
-                        },
+                            onPress: () {
+                              setState((){
+                                _filterMode = value;
+                                _textControllerFilter.clear();
+                                _setFilter('');
+                              });
+                            }
+                          )).toList()
                       ),
 
                       IconButton(

@@ -176,40 +176,44 @@ class _ChildListState extends State<ChildList> {
               child: Text(' ${TextConst.txtBalanceValue}: ${balance.minutes} '),
             ),
 
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.menu, color: Colors.blue),
-              itemBuilder: (context) {
-                return [
-                  TextConst.txtEstimateList,
-                  TextConst.txtExpenseList,
-                  TextConst.txtCoinTuning,
-                  TextConst.txtAppGroupsTuning,
-                  TextConst.txtCheckPointList,
-                ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                )).toList();
-              },
-              onSelected: (value) async {
-                if (value == TextConst.txtEstimateList){
-                  await EstimateList.navigatorPush(context, child);
-                  _refresh();
-                }
-                if (value == TextConst.txtExpenseList && mounted){
-                  ExpenseList.navigatorPush(context, child);
-                  _refresh();
-                }
-                if (value == TextConst.txtCoinTuning && mounted){
-                  CoinList.navigatorPush(context, child);
-                }
-                if (value == TextConst.txtAppGroupsTuning && mounted){
-                  AppGroupList.navigatorPush(context);
-                }
-                if (value == TextConst.txtCheckPointList && mounted){
-                  await CheckPointList.navigatorPush(context, child, false);
-                  _refresh();
-                }
-              },
+            popupMenu(
+                icon: const Icon(Icons.menu),
+                menuItemList: [
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtEstimateList),
+                      onPress: () async {
+                        await EstimateList.navigatorPush(context, child);
+                        _refresh();
+                      }
+                  ),
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtExpenseList),
+                      onPress: () async {
+                        await ExpenseList.navigatorPush(context, child);
+                        _refresh();
+                      }
+                  ),
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtCoinTuning),
+                      onPress: () {
+                        CoinList.navigatorPush(context, child);
+                      }
+                  ),
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtAppGroupsTuning),
+                      onPress: () {
+                        AppGroupList.navigatorPush(context);
+                      }
+                  ),
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtCheckPointList),
+                      onPress: () async {
+                        await CheckPointList.navigatorPush(context, child, false);
+                        _refresh();
+                      }
+                  ),
+
+                ]
             ),
 
             // Кнопка наличия задач (CheckPoint)
@@ -226,29 +230,25 @@ class _ChildListState extends State<ChildList> {
               ),
             ],
 
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.add_task, color: Colors.blue),
-              itemBuilder: (context) {
-                return [
-                  TextConst.txtEstimateAdd,
-                  TextConst.txtTimeRangeAdd,
-                ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                )).toList();
-              },
-              onSelected: (value) async {
-                if (value == TextConst.txtEstimateAdd){
-                  await EstimateAdd.navigatorPush(context, child);
-                  _refresh();
-                }
-                if (value == TextConst.txtTimeRangeAdd && mounted){
-                  TimeRangeAdd.navigatorPush(context, child);
-                  _refresh();
-                }
-              },
+            popupMenu(
+                icon: const Icon(Icons.add_task, color: Colors.blue),
+                menuItemList: [
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtEstimateAdd),
+                      onPress: () async {
+                        await EstimateAdd.navigatorPush(context, child);
+                        _refresh();
+                      }
+                  ),
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtTimeRangeAdd),
+                      onPress: () async {
+                        await TimeRangeAdd.navigatorPush(context, child);
+                        _refresh();
+                      }
+                  ),
+                ]
             ),
-
 
           ]),
         ],

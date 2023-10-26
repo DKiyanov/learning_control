@@ -416,21 +416,17 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
             readOnly: widget.viewOnly,
             keyboardType: _bonusType == CheckPointResultType.text? null : const TextInputType.numberWithOptions(decimal: true, signed: false),
             decoration: InputDecoration(
-              prefixIcon: PopupMenuButton<CheckPointResultType>(
-                icon: const Icon(Icons.arrow_drop_down),
-                itemBuilder: (context) {
-                  return CheckPointResultType.values.map((e) => PopupMenuItem<CheckPointResultType>(
-                    value: e,
-                    child: Text(getCheckPointResultTypeName(e)),
-                  )).toList();
-                },
-                onSelected: widget.viewOnly? null : (value){
-                  setState(() {
-                    _bonusType = value;
-                    _tcBonusValue.text = '';
-                  });
-
-                },
+              prefixIcon: popupMenu(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  menuItemList: CheckPointResultType.values.map((checkPointResultType) => SimpleMenuItem(
+                    child: Text(getCheckPointResultTypeName(checkPointResultType)),
+                    onPress: () {
+                      setState(() {
+                        _bonusType = checkPointResultType;
+                        _tcBonusValue.text = '';
+                      });
+                    }
+                  )).toList()
               ),
 
               filled: true,
@@ -463,21 +459,17 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
             readOnly: widget.viewOnly,
             keyboardType: _penaltyType == CheckPointResultType.text? null : const TextInputType.numberWithOptions(decimal: true, signed: false),
             decoration: InputDecoration(
-              prefixIcon: PopupMenuButton<CheckPointResultType>(
-                icon: const Icon(Icons.arrow_drop_down),
-                itemBuilder: (context) {
-                  return CheckPointResultType.values.map((e) => PopupMenuItem<CheckPointResultType>(
-                    value: e,
-                    child: Text(getCheckPointResultTypeName(e)),
-                  )).toList();
-                },
-                onSelected: widget.viewOnly? null : (value){
-                  setState(() {
-                    _penaltyType = value;
-                    _tcPenaltyValue.text = '';
-                  });
-
-                },
+              prefixIcon: popupMenu(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  menuItemList: CheckPointResultType.values.map((checkPointResultType) => SimpleMenuItem(
+                    child: Text(getCheckPointResultTypeName(checkPointResultType)),
+                    onPress: () {
+                      setState(() {
+                        _penaltyType = checkPointResultType;
+                        _tcPenaltyValue.text = '';
+                      });
+                    }
+                  )).toList()
               ),
 
               filled: true,

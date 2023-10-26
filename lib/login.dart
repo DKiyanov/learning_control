@@ -69,7 +69,7 @@ class _LoginState extends State<Login> {
 
         appBar: AppBar(
           centerTitle: true,
-          title: Text(TextConst.txtEntryToOptions),
+          title: Text(appState.firstRun? TextConst.txtConnecting : TextConst.txtEntryToOptions),
         ),
 
         body: Padding(padding: const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 8), child:

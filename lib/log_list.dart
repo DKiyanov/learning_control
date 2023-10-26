@@ -23,36 +23,39 @@ class _LogListState extends State<LogList> {
         centerTitle: true,
         title: Text(TextConst.txtLogList),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
-            itemBuilder: (context) {
-              final menuItemList = [
-                TextConst.txtSaveLog,
-                appState.log.extLogging? TextConst.txtExtLoggingOff : TextConst.txtExtLoggingOn,
-              ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                value: value,
-                child: Text(value),
-              )).toList();
+          popupMenu(
+              icon: const Icon(Icons.menu),
+              menuItemList: [
+                SimpleMenuItem(
+                    child: Text(TextConst.txtSaveLog),
+                    onPress: () {
+                      _saveLog();
+                    }
+                ),
 
-              return menuItemList;
-            },
-            onSelected: (value) async {
-              if (value == TextConst.txtSaveLog) {
-                _saveLog();
-              }
+                if (appState.log.extLogging) ...[
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtExtLoggingOff),
+                      onPress: () {
+                        setState(() {
+                          appState.log.extLogging = false;
+                        });
+                      }
+                  ),
+                ] else ...[
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtExtLoggingOn),
+                      onPress: () {
+                        setState(() {
+                          appState.log.extLogging = true;
+                        });
+                      }
+                  ),
+                ],
 
-              if (value == TextConst.txtExtLoggingOff) {
-                setState(() {
-                  appState.log.extLogging = false;
-                });
-              }
-              if (value == TextConst.txtExtLoggingOn) {
-                setState(() {
-                  appState.log.extLogging = true;
-                });
-              }
-            },
-          )
+              ]
+          ),
+
         ],
       ),
 

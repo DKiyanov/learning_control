@@ -58,32 +58,30 @@ class _SkipAppListEditorState extends State<SkipAppListEditor> {
         centerTitle: true,
         title: Text(TextConst.txtSkipAppListTuning),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
-            itemBuilder: (context) {
-              return [
+          popupMenu(
+              icon: const Icon(Icons.menu),
+              menuItemList: [
                 if (!_showAllApp) ...[
-                  TextConst.txtShowAllApp,
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtShowAllApp),
+                      onPress: () {
+                        setState(() {
+                          _refreshAppList(true);
+                        });
+                      }
+                  ),
                 ] else ...[
-                  TextConst.txtShowOnlyCandidateApp,
-                ]
-              ].map<PopupMenuItem<String>>((value) => PopupMenuItem<String>(
-                value: value,
-                child: Text(value),
-              )).toList();
-            },
-            onSelected: (value) async {
-              if (value == TextConst.txtShowAllApp) {
-                setState(() {
-                  _refreshAppList(true);
-                });
-              }
-              if (value == TextConst.txtShowOnlyCandidateApp) {
-                setState(() {
-                  _refreshAppList(false);
-                });
-              }
-            },
+                  SimpleMenuItem(
+                      child: Text(TextConst.txtShowOnlyCandidateApp),
+                      onPress: () {
+                        setState(() {
+                          _refreshAppList(false);
+                        });
+                      }
+                  ),
+                ],
+
+              ]
           ),
 
           IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: ()=> saveAndExit() )
