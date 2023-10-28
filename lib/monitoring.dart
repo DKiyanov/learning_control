@@ -296,7 +296,7 @@ class Monitoring {
 
   void _synchronizeProcess() async {
     _prepareForNewDay();
-    await appState.serverConnect.synchronize(showErrorToast: false, ignoreShortTime: false);
+    await appState.objectsManager.synchronize(showErrorToast: false, ignoreShortTime: false);
   }
 
   void _addEstimate(Map<String, dynamic> data) {

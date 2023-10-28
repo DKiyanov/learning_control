@@ -153,7 +153,7 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
   }
 
   Future<void> _initAppGroupList() async {
-    final groupList = (await appState.appGroupManager.getObjectList(appState.serverConnect.user!, appState.usingMode!)).where((group) => !group.deleted && !group.individual );
+    final groupList = (await appState.appGroupManager.getObjectList(appState.serverConnect.user!, appState.usingMode)).where((group) => !group.deleted && !group.individual );
 
     for (var appGroup in groupList) {
       appGroupList.add(

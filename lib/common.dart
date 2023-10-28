@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'app_state.dart';
 
+enum LoginMode{
+  masterParent,
+  slaveParent,
+  child
+}
+
 class TextConst{
   static String versionDateStr    = '19.09.2023';
   static String version           = 'Версия';
@@ -14,10 +20,12 @@ class TextConst{
   static String txtWithoutServer  = 'Без сервера';
   static String txtWithServer     = 'С сервером';
   static String txtEmailAddress   = 'Адрес электронной почты родителя';
+  static String txtInviteKey      = 'Код приглашения';
   static String txtPassword       = 'Пароль';
   static String txtPasswordPinCode = 'Пинкод/Пароль';
   static String txtSignIn         = 'Войти';
   static String txtSignUp         = 'Зарегистрироваться';
+  static String txtBack           = 'Назад';
   static String txtInputAllParams = 'Нужно заполнить все поля';
   static String txtProceed        = 'Продолжить';
   static String txtOptions        = 'Настройки';
@@ -82,11 +90,11 @@ class TextConst{
   static String txtInputPinCode      = 'Обязательно введите пинкод и подсказку к нему';
   static String txtInvalidInstallation = 'Похоже что то сломалось, лучше попробовать переустановить приложение';
 
-  static String txtUsingModeTitle      = 'Выбор режима использования устройства';
-  static String txtUsingModeInvitation = 'Выбирите пожалуйста кем будет использоваться это устойство';
-  static String txtUsingModeParent     = 'Это устройство будет использоваться РОДИТЕЛЕМ';
-  static String txtUsingModeChild      = 'Это устройство будет использоваться РЕБЁНКОМ';
-  static String txtUsingModeWarning    = 'Изменить выор можно будет только переустановкой программы';
+  static String txtLoginModeTitle      = 'Выбор режима использования устройства';
+  static String txtLoginModeInvitation = 'Выбирите пожалуйста кем будет использоваться это устойство';
+  static String txtLoginModeMasterParent = 'Это устройство будет использоваться РОДИТЕЛЕМ (организатором группы)';
+  static String txtLoginModeSlaveParent = 'Это устройство будет использоваться РОДИТЕЛЕМ (участником группы)';
+  static String txtLoginModeChild      = 'Это устройство будет использоваться РЕБЁНКОМ';
   static String txtImageFolder          = 'Каталог с картинками';
   static String txtSelectImageFolder    = 'Выбирите каталог с картинками';
   static String txtSelectFolder         = 'Выбрать каталог';

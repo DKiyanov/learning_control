@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'common.dart';
-import 'app_state.dart';
 
-class UsingModeSelector extends StatefulWidget {
-  final VoidCallback onUsingModeSelectOk;
-  const UsingModeSelector({required this.onUsingModeSelectOk, Key? key}) : super(key: key);
+typedef ValueCallback<T> = void Function(T value);
+
+class LoginModeSelector extends StatefulWidget {
+  final ValueCallback<LoginMode> onLoginModeSelectOk;
+  const LoginModeSelector({required this.onLoginModeSelectOk, Key? key}) : super(key: key);
 
   @override
-  State<UsingModeSelector> createState() => _UsingModeSelectorState();
+  State<LoginModeSelector> createState() => _LoginModeSelectorState();
 }
 
-class _UsingModeSelectorState extends State<UsingModeSelector> {
-  UsingMode? _usingMode;
+class _LoginModeSelectorState extends State<LoginModeSelector> {
+  LoginMode? _loginMode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text(TextConst.txtUsingModeTitle),
+          title: Text(TextConst.txtLoginModeTitle),
         ),
 
         body: SafeArea(
@@ -31,33 +31,44 @@ class _UsingModeSelectorState extends State<UsingModeSelector> {
                     color: Colors.amberAccent,
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
-                      child: Text(TextConst.txtUsingModeInvitation),
+                      child: Text(TextConst.txtLoginModeInvitation),
                     )
                   ),
 
                   ChoiceChip(
-                    label: Text(TextConst.txtUsingModeParent),
-                    selected: _usingMode == UsingMode.parent,
+                    label: Text(TextConst.txtLoginModeMasterParent),
+                    selected: _loginMode == LoginMode.masterParent,
                     selectedColor: Colors.lightGreenAccent,
                     onSelected: (value){
                       setState(() {
-                        _usingMode = UsingMode.parent;
+                        _loginMode = LoginMode.masterParent;
                       });
                     },
                   ),
 
                   ChoiceChip(
-                    label: Text(TextConst.txtUsingModeChild),
-                    selected: _usingMode == UsingMode.child,
+                    label: Text(TextConst.txtLoginModeSlaveParent),
+                    selected: _loginMode == LoginMode.slaveParent,
                     selectedColor: Colors.lightGreenAccent,
                     onSelected: (value){
                       setState(() {
-                        _usingMode = UsingMode.child;
+                        _loginMode = LoginMode.slaveParent;
                       });
                     },
                   ),
 
-                  ElevatedButton(onPressed: _usingMode != null? ()=> proceed(): null, child: Text(TextConst.txtProceed))
+                  ChoiceChip(
+                    label: Text(TextConst.txtLoginModeChild),
+                    selected: _loginMode == LoginMode.child,
+                    selectedColor: Colors.lightGreenAccent,
+                    onSelected: (value){
+                      setState(() {
+                        _loginMode = LoginMode.child;
+                      });
+                    },
+                  ),
+
+                  ElevatedButton(onPressed: _loginMode != null? ()=> proceed(): null, child: Text(TextConst.txtProceed))
 
                 ],
               )
@@ -67,11 +78,6 @@ class _UsingModeSelectorState extends State<UsingModeSelector> {
   }
 
   Future<void> proceed() async {
-    try {
-      appState.setUsingMode(_usingMode!);
-      widget.onUsingModeSelectOk.call();
-    } catch(e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
+      widget.onLoginModeSelectOk.call(_loginMode!);
   }
 }

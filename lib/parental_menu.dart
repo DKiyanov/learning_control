@@ -8,7 +8,8 @@ import 'common.dart';
 import 'estimate_list.dart';
 import 'expense_list.dart';
 import 'log_list.dart';
-import 'login.dart';
+import 'login_invite.dart';
+import 'options.dart';
 
 class ParentalMenu extends StatefulWidget {
   static Future<Object?> navigatorPush(BuildContext context) async {
@@ -97,7 +98,18 @@ class _ParentalMenuState extends State<ParentalMenu> {
       ),
 
       ElevatedButton(
-        onPressed: ()=> Login.navigate(context).then((value) => setState((){})),
+        onPressed: () {
+          LoginInvite.navigate(
+            context  : context,
+            connect  : appState.serverConnect,
+            loginMode: appState.loginMode,
+            title    : TextConst.txtEntryToOptions,
+            onLoginOk: () async {
+              await Options.navigatorPushReplacement(context);
+              setState(() {});
+            }
+          );
+        },
         child: Text(TextConst.txtEntryToOptions,),
       ),
 

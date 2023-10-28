@@ -6,7 +6,6 @@ import 'dart:ui';
 import 'package:crypto/crypto.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:learning_control/parse/parse_app/parse_app.dart';
 import 'package:learning_control/parse/parse_app/parse_app_group.dart';
@@ -43,11 +42,9 @@ enum DeviceType {
 }
 
 class AppState {
-  static const String keyUsingMode       = 'UsingMode';
   static const String keyBackGroundImage = 'backGroundImage';
   static const String keyDeviceType      = 'DeviceType';
   static const String keySkipAppList     = 'SkipAppList';
-  static const String _keyFirstConfigOk   = 'FirstConfigOk';
 
   static final AppState _appState = AppState._internal();
 
@@ -63,13 +60,8 @@ class AppState {
   final log = Log();
   late ApplicationsInfo apps;
 
-  UsingMode? _usingMode;
-  UsingMode? get usingMode => _usingMode;
-
-  bool get firstRun => _usingMode == null;
-
-  bool _firstConfigOk = false;
-  bool get firstConfigOk => _firstConfigOk;
+  late LoginMode loginMode;
+  late UsingMode usingMode;
 
   late ParseConnect serverConnect;
 
@@ -82,6 +74,8 @@ class AppState {
   final balanceDirector    = BalanceDirector();
 
   final checkPointManager = CheckPointManager();
+
+  final objectsManager = ParseObjectsManager();
 
   final monitoring = Monitoring();
 
@@ -125,8 +119,10 @@ class AppState {
   late PinCodeManager pinCodeManager;
 
   /// Инициализация
-  Future<bool> initialization() async {
-    if (_prefs != null) return true;
+  Future<void> initialization(ParseConnect serverConnect, LoginMode loginMode) async {
+    this.serverConnect = serverConnect;
+    this.loginMode     = loginMode;
+    usingMode = loginMode == LoginMode.child ? UsingMode.child : UsingMode.parent;
 
     appState = this;
 
@@ -158,16 +154,7 @@ class AppState {
     apps   = ApplicationsInfo(log);
     await apps.init();
 
-    final usingModeStr = _prefs!.getString(keyUsingMode)??'';
-    _usingMode = UsingMode.values.firstWhereOrNull((usingMode) => usingMode.name == usingModeStr);
-
-    serverConnect = ParseConnect(_prefs!, log);
-
     pinCodeManager = PinCodeManager(_prefs!);
-
-    if (_usingMode == null) return false;
-
-    _firstConfigOk =_prefs!.getBool(_keyFirstConfigOk)??false;
 
     _backGroundImageOn = _prefs!.getBool(keyBackGroundImage)??false;
     if (_backGroundImageOn) {
@@ -180,15 +167,10 @@ class AppState {
     _skipAppList.addAll(_prefs!.getStringList(keySkipAppList)??[]);
     if (_skipAppList.isNotEmpty) PlatformService.setSkipAppList(_skipAppList);
 
-    await serverConnect.loginFromPrefs();
-    if (!serverConnect.loggedIn) return false;
-
-    if (usingMode == UsingMode.child) {
-      await serverConnect.initChildDevice();
+    if (usingMode == LoginMode.child) {
+      await objectsManager.initChildDevice();
       await monitoring.readStatus();
     }
-
-    return true;
   }
 
   _onError(Object exception, StackTrace? stack) {
@@ -226,7 +208,7 @@ class AppState {
               }),
 
               IconButton(icon: const Icon(Icons.check, color: Colors.lightGreen), onPressed: () {
-                if (pinCodeManager.checkPinCode(password) || serverConnect.checkPasswordLocal(password)) {
+                if (pinCodeManager.checkPinCode(password)) {
                   Navigator.pop(context, true);
                 } else {
                   Fluttertoast.showToast(msg: TextConst.errInvalidPasswordPinCode);
@@ -239,17 +221,6 @@ class AppState {
 
     textController.dispose();
     return result??false;
-  }
-
-  Future<void> setUsingMode(UsingMode usingMode) async {
-    if (_usingMode != null) return;
-    _usingMode = usingMode;
-    _prefs!.setString(keyUsingMode,_usingMode!.name);
-  }
-
-  Future<void> setFirstConfig(bool newFirstConfigOk) async {
-    _firstConfigOk = newFirstConfigOk;
-    await _prefs!.setBool(_keyFirstConfigOk, _firstConfigOk);
   }
 
   Future<void> setBackgroundImage(BuildContext context) async {
@@ -291,7 +262,7 @@ class AppState {
     if (!_openAppList.contains(packageName)) _openAppList.add(packageName);
     log.add('open app: $packageName');
     await DeviceApps.openApp(packageName);
-    appState.serverConnect.synchronize(showErrorToast: false, ignoreShortTime: false);
+    objectsManager.synchronize(showErrorToast: false, ignoreShortTime: false);
   }
 
   Future<void> deleteApp(String packageName) async {

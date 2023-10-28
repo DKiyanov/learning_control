@@ -1,130 +1,91 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app_state.dart';
 import '../common.dart';
-import '../log.dart';
-
-enum ConnectMode{
-  wakeUp,
-  login,
-  signUp,
-}
 
 class ParseConnect {
   static const String _applicationId   = 'dk_parental_control';
   static const String _keyServerURL    = 'ServerURL';
-  static const String _keyLogin        = 'Login';
-  static const String _keyPasswordHash = 'passwordHash';
 
-  ParseConnect(this._prefs, this._log);
+  ParseConnect(this._prefs);
 
   final SharedPreferences _prefs;
-  final Log _log;
-  
+
   String _serverURL = '';
   String get serverURL => _serverURL;
 
-  String _login = '';
-  String get login => _login;
-
-  bool _loggedIn = false;
-  bool get loggedIn => _loggedIn;
-
-  String lastError = '';
-
-  bool _passwordCorrect = false;
-  bool get passwordCorrect => _passwordCorrect;
+  String _loginId = '';
+  String get loginId => _loginId;
 
   ParseUser? _user;
-  ParseUser? get user {
-    if (_loggedIn) return _user;
-    return null;
+  ParseUser? get user => _user;
+
+  String _lastError = '';
+  String get lastError => _lastError;
+
+  Future<void> _init() async {
+    await Parse().initialize(
+        _applicationId,
+        _serverURL,
+        debug: true,
+        coreStore: await CoreStoreSharedPrefsImp.getInstance()
+    );
   }
 
-  static const String _salt1 = 'bearKegged';
-  static const String _salt2 = 'RadiusBorder';
+  Future<void> wakeUp() async {
+    _serverURL = _prefs.getString(_keyServerURL)??'';
+    if (_serverURL.isEmpty) return;
 
-  Future<bool> loginFromPrefs() async {
-    _loggedIn = false;
+    await _init();
 
-    _serverURL         = _prefs.getString(_keyServerURL)??'';
-    _login             = _prefs.getString(_keyLogin)??'';
-    final passwordHash = _prefs.getString(_keyPasswordHash)??'';
-
-    if (_login.isNotEmpty) {
-      _loggedIn = await connectToServer(_serverURL, _login, passwordHash, ConnectMode.wakeUp);
-    }
-
-    return _loggedIn;
+    _user = await ParseUser.currentUser();
+    _loginId = _user?.username??'';
   }
 
-  Future<bool> setConnectionParam(String url, String login, String password, bool signUp) async {
-    final ret = await connectToServer(url, login, password, signUp ? ConnectMode.signUp : ConnectMode.login);
-    return ret;
-  }
+  Future<bool> login(String serverURL, String loginID, String password, bool signUp) async {
+    await _setServerURL(serverURL);
 
-  bool checkPasswordLocal(String password){
-    final savedPasswordHash = _prefs.getString(_keyPasswordHash)??'';
-    final passwordHash = _getHash(login.toLowerCase() + password + _salt1);
-    return passwordHash == savedPasswordHash;
-  }
-
-  Future<bool> connectToServer(String url, String login, String password, ConnectMode mode) async {
-    _loggedIn = false;
-    _passwordCorrect = false;
-
-    final savedPasswordHash = _prefs.getString(_keyPasswordHash)??'';
-
-    String passwordHash;
-    if (mode != ConnectMode.wakeUp){
-      passwordHash = _getHash(login.toLowerCase() + password + _salt1);
+    _user = ParseUser(loginID, password, loginID);
+    bool result;
+    if (signUp) {
+      result = (await _user!.signUp()).success;
     } else {
-      passwordHash = password;
+      result = (await _user!.login()).success;
     }
 
-    _passwordCorrect = passwordHash == savedPasswordHash;
-
-    if (_user != null) {
-      if (_passwordCorrect && _user!.emailAddress!.toLowerCase() == login.toLowerCase()) {
-        _loggedIn = true;
-        _log.add('entry with out login');
-        return true;
-      } else {
-        try {
-          _user!.logout();
-        } catch(e) {
-          _log.add('error on logout');
-        }
-        _user = null;
-      }
+    if (result){
+      _loginId = loginID;
+      return true;
+    } else {
+      _lastError = TextConst.errFailedLogin;
+      return false;
     }
-
-    final realPassword = _getHash(passwordHash + _salt2);
-
-    final ret = await _connectToServer(url, login, realPassword, mode);
-
-    if (!ret) {
-      return ret;
-    }
-
-    if (mode != ConnectMode.wakeUp){
-      _serverURL = url;
-      _login     = login;
-      _prefs.setString(_keyServerURL    , _serverURL   );
-      _prefs.setString(_keyLogin        , _login       );
-      _prefs.setString(_keyPasswordHash , passwordHash );
-    }
-
-    _loggedIn = true;
-
-    return ret;
   }
 
-  Future<bool> sessionHealthCheck() async {
+  Future<bool> loginByInvite(String serverURL, String inviteKey) async {
+    await _setServerURL(serverURL);
+
+    final ParseResponse response = await ParseUser.loginWith('decard', apple('token', 'id' ) );
+    if (response.success) {
+      _user = await ParseUser.currentUser();
+      _loginId = _user?.username??'';
+      return true;
+    } else {
+      _lastError = TextConst.errFailedLogin;
+      return false;
+    }
+  }
+
+  Future<void> _setServerURL(String serverURL) async {
+    _serverURL = serverURL;
+    _prefs.setString(_keyServerURL, serverURL);
+    await _init();
+  }
+
+
+  Future<bool> sessionHealthOk() async {
     // Parse().healthCheck() - не выдаёт исключение когда сервер доступен но сейсия протухла
     try {
       final query = QueryBuilder<ParseUser>(ParseUser.forQuery());
@@ -137,85 +98,30 @@ class ParseConnect {
     }
   }
 
-  Future<bool> _connectToServer(String url, String login, String password, ConnectMode mode) async {
-    lastError = '';
-
-    await Parse().initialize(
-        _applicationId,
-        url,
-        debug: true,
-        coreStore: await CoreStoreSharedPrefsImp.getInstance()
-    );
-
-    // if (!(await Parse().healthCheck()).success){
-    //   print('healthCheck invalid');
-    //   lastError = TextConst.errServerUnavailable;
-    //   return false;
-    // }
-    //
-    // _serverAvailable = true;
-
-    if (mode == ConnectMode.wakeUp) {
-      _user = await ParseUser.currentUser();
-      if (_user != null) {
-        if ( _user!.emailAddress!.toLowerCase() == login.toLowerCase() ){
-          _log.add('from currentUser');
-          return true;
-        }
-      }
-    }
-
-    _user = ParseUser(login, password, login);
-
-    if (mode == ConnectMode.signUp) {
-      if ((await _user!.signUp()).success){
-        return true;
-      } else {
-        lastError = TextConst.errFailedSignUp;
-        return false;
-      }
-    }
-
-    if ((await _user!.login()).success){
-      return true;
-    } else {
-      lastError = TextConst.errFailedLogin;
-      return false;
-    }
+  Future<bool> isServerAvailable() async {
+    final result = await Parse().healthCheck();
+    return result.success;
   }
+}
 
-  String _getHash(String str){
-    return md5.convert(utf8.encode(str)).toString();
-  }
-
-  Future<void> initChildDevice() async {
-    await appState.childManager.initCurrentChild();
-    await appState.deviceManager.initCurrentDevice();
-
-    await appState.appManager.init(appState.deviceManager.device, appState.childManager.child);
-    await appState.appGroupManager.init(user!);
-    await appState.appSettingsManager.init(appState.deviceManager.device, appState.childManager.child);
-
-    await appState.balanceDirector.init(appState.childManager.child);
-    await appState.coinManager.init(appState.childManager.child);
-
-    await appState.checkPointManager.init(appState.childManager.child);
-  }
-
+class ParseObjectsManager{
   bool _synchronizeLock = false;
   int _lastSynchronization = 0;
 
   bool get synchronizationInProcess => _synchronizeLock;
 
+  String _lastError = '';
+  String get lastError => _lastError;
+
   Future<void> synchronize({required bool showErrorToast, required bool ignoreShortTime}) async {
     if (_synchronizeLock) {
-      _log.add('synchronization is already in progress');
+      appState.log.add('synchronization is already in progress');
       return;
     }
 
     if (!ignoreShortTime) {
       if ((DateTime.now().millisecondsSinceEpoch - _lastSynchronization) < 1000 * 60 * 5) {
-        _log.add('too little time has passed since the last sync');
+        appState.log.add('too little time has passed since the last sync');
         return;
       }
     }
@@ -224,7 +130,7 @@ class ParseConnect {
 
     String stage = '';
     try {
-      _log.add('synchronize start');
+      appState.log.add('synchronize start');
 
       stage = 'synchronize App';
       await appState.appManager.synchronize();
@@ -241,18 +147,18 @@ class ParseConnect {
       stage = 'synchronize CheckPoint';
       await appState.checkPointManager.synchronize();
 
-      _log.add('synchronize finished');
+      appState.log.add('synchronize finished');
     } catch (e) {
       if (e is ParseError) {
-        lastError = e.message;
+        _lastError = e.message;
       } else {
-        lastError = e.toString();
+        _lastError = e.toString();
       }
 
-      _log.add('synchronize $stage error: $lastError');
+      appState.log.add('synchronize $stage error: $_lastError');
 
       if (showErrorToast){
-        Fluttertoast.showToast(msg: '$stage error: $lastError');
+        Fluttertoast.showToast(msg: '$stage error: $_lastError');
       }
     }
 
@@ -260,8 +166,18 @@ class ParseConnect {
     _synchronizeLock = false;
   }
 
-  Future<bool> isServerAvailable() async {
-    final result = await Parse().healthCheck();
-    return result.success;
+  Future<void> initChildDevice() async {
+    await appState.childManager.initCurrentChild();
+    await appState.deviceManager.initCurrentDevice();
+
+    await appState.appManager.init(appState.deviceManager.device, appState.childManager.child);
+    await appState.appGroupManager.init(appState.serverConnect.user!);
+    await appState.appSettingsManager.init(appState.deviceManager.device, appState.childManager.child);
+
+    await appState.balanceDirector.init(appState.childManager.child);
+    await appState.coinManager.init(appState.childManager.child);
+
+    await appState.checkPointManager.init(appState.childManager.child);
   }
+
 }

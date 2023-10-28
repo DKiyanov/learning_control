@@ -470,8 +470,8 @@ class _OptionsState extends State<Options> {
     }
 
     if (_child != null && _device != null ) {
-      await appState.serverConnect.initChildDevice();
-      await appState.serverConnect.synchronize(showErrorToast: true, ignoreShortTime: true);
+      await appState.objectsManager.initChildDevice();
+      await appState.objectsManager.synchronize(showErrorToast: true, ignoreShortTime: true);
     }
 
     setState(() {});
@@ -519,7 +519,7 @@ class _OptionsState extends State<Options> {
   }
 
   Future<void> showAppsTunerPage() async {
-    await appState.serverConnect.synchronize(showErrorToast: true, ignoreShortTime: false);
+    await appState.objectsManager.synchronize(showErrorToast: true, ignoreShortTime: false);
     if (!mounted) return;
     AppsTuner.navigatorPush(context, _child!, _device!);
   }

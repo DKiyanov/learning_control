@@ -387,7 +387,7 @@ class _LauncherState extends State<Launcher> {
                   setState(() {
                     _synchronization = true;
                   });
-                  await appState.serverConnect.synchronize(showErrorToast: true, ignoreShortTime: true);
+                  await appState.objectsManager.synchronize(showErrorToast: true, ignoreShortTime: true);
                   _synchronization = false;
                   _refresh();
                 }
