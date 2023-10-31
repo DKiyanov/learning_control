@@ -13,6 +13,7 @@ import 'package:learning_control/parse/parse_app/parse_app_settings.dart';
 import 'package:learning_control/parse/parse_balance.dart';
 import 'package:learning_control/parse/parse_check_point.dart';
 import 'package:learning_control/parse/parse_connect.dart';
+import 'package:learning_control/parse/parse_director.dart';
 import 'package:learning_control/parse/parse_main.dart';
 import 'package:learning_control/platform_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,8 +75,7 @@ class AppState {
   final balanceDirector    = BalanceDirector();
 
   final checkPointManager = CheckPointManager();
-
-  final objectsManager = ParseObjectsManager();
+  late ParseDirector objectsManager;
 
   final monitoring = Monitoring();
 
@@ -166,6 +166,8 @@ class AppState {
 
     _skipAppList.addAll(_prefs!.getStringList(keySkipAppList)??[]);
     if (_skipAppList.isNotEmpty) PlatformService.setSkipAppList(_skipAppList);
+
+    objectsManager = ParseDirector(this);
 
     if (usingMode == LoginMode.child) {
       await objectsManager.initChildDevice();

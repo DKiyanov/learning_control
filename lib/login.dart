@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learning_control/parse/parse_connect.dart';
 import 'common.dart';
-import 'app_state.dart';
+import 'package:async/async.dart';
 
 class Login extends StatefulWidget {
   static Future<Object> navigate({required BuildContext context, required ParseConnect connect, VoidCallback? onLoginOk, VoidCallback? onLoginCancel}) async {
@@ -28,6 +28,8 @@ class _LoginState extends State<Login> {
   String _displayError = '';
 
   bool _obscurePassword = true;
+
+  CancelableOperation? _loginProcess;
 
   @override
   void dispose() {
@@ -61,9 +63,36 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-
+    if (_loginProcess != null) {
+      return Scaffold(
         appBar: AppBar(
+          centerTitle: true,
+          title: Text(TextConst.txtConnecting),
+        ),
+        body: Center(child:
+          Column(
+            mainAxisSize:  MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              Container(height: 10),
+
+              ElevatedButton(
+                  onPressed: (){
+                    _loginProcess!.cancel();
+                    setState(() {});
+                  },
+                  child: Text(TextConst.txtCancel)
+              ),
+            ]
+        )),
+      );
+    }
+
+    return Scaffold(
+        appBar: AppBar(
+          leading: widget.onLoginCancel == null ? null : InkWell(child: const Icon(Icons.arrow_back), onTap: () {
+            widget.onLoginCancel!.call();
+          }),
           centerTitle: true,
           title: Text(TextConst.txtConnecting),
         ),
@@ -108,21 +137,32 @@ class _LoginState extends State<Login> {
             obscureText: _obscurePassword,
           ),
 
-          ElevatedButton(child: Text(TextConst.txtSignIn), onPressed: ()=> checkAndGo(false)),
-
-          if (widget.connect.loginId.isEmpty) ...[
-            ElevatedButton(child: Text(TextConst.txtSignUp), onPressed: ()=> checkAndGo(true)),
-          ],
-
           if (_displayError.isNotEmpty) ...[
             Text(_displayError),
+            Container(height: 4),
           ],
 
-          if (widget.onLoginCancel != null) ...[
-            ElevatedButton(child: Text(TextConst.txtBack), onPressed: (){
-              widget.onLoginCancel!.call();
-            }),
-          ]
+          Container(height: 10),
+
+          Padding(
+            padding: const EdgeInsets.only(left: 50, right: 50),
+            child: Row(
+              children: [
+                Expanded(child: ElevatedButton(child: Text(TextConst.txtSignIn), onPressed: ()=> checkAndGo(false))),
+              ],
+            ),
+          ),
+
+          if (widget.connect.loginId.isEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 50, right: 50),
+              child: Row(
+                children: [
+                  Expanded(child: ElevatedButton(child: Text(TextConst.txtSignUp), onPressed: ()=> checkAndGo(true))),
+                ],
+              ),
+            ),
+          ],
 
         ])
         )
@@ -139,21 +179,40 @@ class _LoginState extends State<Login> {
       return;
     }
 
-    final ret = await widget.connect.login(url, login, password, signUp);
+    final loginFuture = widget.connect.loginWithPassword(url, login, password, signUp);
+//  final loginFuture = widget.connect.loginWithGoogle();
 
-    if (!ret) {
-      setState(() {
-        _displayError = appState.serverConnect.lastError;
-      });
-      return;
-    }
+    loginFuture.then((ret) {
+      if (_loginProcess == null) {
+        return;
+      }
+      _loginProcess = null;
 
-    if (ret && widget.onLoginOk != null) {
-      widget.onLoginOk!.call();
-      return;
-    }
+      if (!ret) {
+        setState(() {
+          _displayError = widget.connect.lastError;
+        });
+        return;
+      }
 
-    if (!mounted) return;
-    Navigator.pop(context, true);
+      if (ret && widget.onLoginOk != null) {
+        widget.onLoginOk!.call();
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    });
+
+    _loginProcess = CancelableOperation<bool>.fromFuture(
+       loginFuture,
+       onCancel: () {
+         setState(() {
+           _loginProcess = null;
+         });
+       }
+    );
+
+    setState(() {});
   }
 }

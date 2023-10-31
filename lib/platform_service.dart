@@ -166,4 +166,13 @@ class PlatformService{
       return false;
     }
   }
+
+  static Future<String> getDeviceID() async {
+    try {
+      final String result = await platform.invokeMethod('getDeviceID');
+      return result;
+    } on PlatformException {
+      return '';
+    }
+  }
 }

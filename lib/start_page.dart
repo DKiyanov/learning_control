@@ -72,7 +72,7 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     if (_isStarting) {
-      _wait();
+      return _wait();
     }
 
     if (_loginMode == null) {

@@ -24,6 +24,7 @@ import android.os.PowerManager;
 import android.provider.Settings;
 
 import android.util.Log;
+import android.provider.Settings.Secure;
 
 public class MainActivity extends FlutterActivity {
     private static final String TAG = "MainActivity.java";
@@ -121,6 +122,9 @@ public class MainActivity extends FlutterActivity {
                             }
                             else if (call.method.equals("appIsVisible")) {
                                 result.success(appIsVisible);
+                            }
+                            else if (call.method.equals("getDeviceID")) {
+                                result.success(getDeviceID());
                             }
                             else {
                                 result.notImplemented();
@@ -339,5 +343,10 @@ public class MainActivity extends FlutterActivity {
         startActivity(mainIntent);
         Runtime.getRuntime().exit(0);
         return true;
+    }
+
+    private String getDeviceID() {
+        String android_id = Secure.getString(getContext().getContentResolver(), Secure.ANDROID_ID);
+        return android_id;
     }
 }

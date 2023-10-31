@@ -9,15 +9,14 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import 'common.dart';
 
 class Invite extends StatefulWidget {
-  static Future<Object?> navigatorPush(BuildContext context, Duration expirationDuration, {bool forChild = false, bool forParent = false }) async {
-    return Navigator.push(context, MaterialPageRoute(builder: (_) => Invite(expirationDuration: expirationDuration, forChild: forChild, forParent: forParent )));
+  static Future<Object?> navigatorPush(BuildContext context, Duration expirationDuration, LoginMode loginMode) async {
+    return Navigator.push(context, MaterialPageRoute(builder: (_) => Invite(loginMode: loginMode, expirationDuration: expirationDuration )));
   }
 
-  final bool forChild;
-  final bool forParent;
+  final LoginMode loginMode;
   final Duration expirationDuration;
 
-  const Invite({this.forChild = false, this.forParent = false, required this.expirationDuration, Key? key}) : super(key: key);
+  const Invite({required this.loginMode, required this.expirationDuration, Key? key}) : super(key: key);
 
   @override
   State<Invite> createState() => _InviteState();
@@ -39,26 +38,21 @@ class _InviteState extends State<Invite> {
   }
 
   void _starting() async {
-    await _saveInvite( expirationDuration: widget.expirationDuration, forChild: widget.forChild, forParent: widget.forParent);
+    await _saveInvite(loginMode: widget.loginMode, expirationDuration: widget.expirationDuration);
 
     setState(() {
       _isStarting = false;
     });
   }
 
-  Future<void> _saveInvite({required Duration expirationDuration, bool forChild = false, forParent = false}) async {
-    String forStr = '';
-    if (forChild)  forStr = 'Child';
-    if (forParent) forStr = 'Parent';
-    if (forStr.isEmpty) return;
-
+  Future<void> _saveInvite({required LoginMode loginMode, required Duration expirationDuration}) async {
     var rng = Random();
-    _inviteKey = rng.nextInt(100000);
+    _inviteKey = rng.nextInt(1000000);
 
     _expirationTime = DateTime.now().add(expirationDuration);
 
     final inviteParseObj = ParseObject('Invite');
-    inviteParseObj.set<String>('for', forStr);
+    inviteParseObj.set<String>('for', loginMode.name);
     inviteParseObj.set<DateTime>('expirationTime', _expirationTime);
     inviteParseObj.set<String>('userID', appState.serverConnect.user!.objectId!);
     inviteParseObj.set<int>('inviteKey', _inviteKey);
@@ -90,7 +84,7 @@ class _InviteState extends State<Invite> {
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column( children: [
-          if (widget.forChild) ...[
+          if (widget.loginMode == LoginMode.child) ...[
             Card(
                 color: Colors.yellow,
                 child: Padding(
@@ -108,7 +102,7 @@ class _InviteState extends State<Invite> {
             ),
           ],
 
-          if (widget.forParent) ...[
+          if (widget.loginMode == LoginMode.slaveParent) ...[
             Card(
                 color: Colors.yellow,
                 child: Padding(

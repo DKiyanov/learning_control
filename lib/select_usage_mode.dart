@@ -36,7 +36,7 @@ class _LoginModeSelectorState extends State<LoginModeSelector> {
                   ),
 
                   ChoiceChip(
-                    label: Text(TextConst.txtLoginModeMasterParent),
+                    label: Text(TextConst.txtLoginModeMasterParent, maxLines: 2, textAlign: TextAlign.center),
                     selected: _loginMode == LoginMode.masterParent,
                     selectedColor: Colors.lightGreenAccent,
                     onSelected: (value){
@@ -47,7 +47,7 @@ class _LoginModeSelectorState extends State<LoginModeSelector> {
                   ),
 
                   ChoiceChip(
-                    label: Text(TextConst.txtLoginModeSlaveParent),
+                    label: Text(TextConst.txtLoginModeSlaveParent, maxLines: 2, textAlign: TextAlign.center),
                     selected: _loginMode == LoginMode.slaveParent,
                     selectedColor: Colors.lightGreenAccent,
                     onSelected: (value){

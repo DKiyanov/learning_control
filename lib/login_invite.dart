@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learning_control/parse/parse_connect.dart';
 import 'common.dart';
-import 'app_state.dart';
+import 'package:async/async.dart';
 
 class LoginInvite extends StatefulWidget {
   static Future<Object> navigate({required BuildContext context, required ParseConnect connect, required LoginMode loginMode, required String title, VoidCallback? onLoginOk, VoidCallback? onLoginCancel}) async {
@@ -26,6 +26,7 @@ class _LoginInviteState extends State<LoginInvite> {
   final TextEditingController _tcInviteKey = TextEditingController();
 
   String _displayError = '';
+  CancelableOperation? _loginProcess;
 
   @override
   void dispose() {
@@ -40,7 +41,6 @@ class _LoginInviteState extends State<LoginInvite> {
     super.initState();
 
     _tcServerURL.text = widget.connect.serverURL;
-    _tcInviteKey.text     = widget.connect.loginId;
 
     if (_tcServerURL.text.isEmpty){
       _tcServerURL.text = TextConst.defaultURL;
@@ -50,15 +50,55 @@ class _LoginInviteState extends State<LoginInvite> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-
+    if (_loginProcess != null) {
+      return Scaffold(
         appBar: AppBar(
+          centerTitle: true,
+          title: Text(TextConst.txtConnecting),
+        ),
+        body: Center(child:
+        Column(
+            mainAxisSize:  MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              Container(height: 10),
+
+              ElevatedButton(
+                  onPressed: (){
+                    _loginProcess!.cancel();
+                    setState(() {});
+                  },
+                  child: Text(TextConst.txtCancel)
+              ),
+            ]
+        )),
+      );
+    }
+
+    return Scaffold(
+        appBar: AppBar(
+          leading: widget.onLoginCancel == null ? null : InkWell(child: const Icon(Icons.arrow_back), onTap: () {
+            widget.onLoginCancel!.call();
+          }),
           centerTitle: true,
           title: Text(widget.title),
         ),
 
         body: Padding(padding: const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 8), child:
           Column(children: [
+
+            Row(children: [
+              Expanded(
+                child: Card(
+                  color: Colors.amberAccent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Text(TextConst.txtInviteLoginHelp,  textAlign: TextAlign.center),
+                  ),
+                ),
+              )
+            ]),
+            Container(height: 4),
 
             // Адрес сервера
             TextFormField(
@@ -78,17 +118,21 @@ class _LoginInviteState extends State<LoginInvite> {
               ),
             ),
 
-            ElevatedButton(child: Text(TextConst.txtSignIn), onPressed: ()=> checkAndGo()),
-
             if (_displayError.isNotEmpty) ...[
               Text(_displayError),
+              Container(height: 4),
             ],
 
-            if (widget.onLoginCancel != null) ...[
-              ElevatedButton(child: Text(TextConst.txtBack), onPressed: (){
-                widget.onLoginCancel!.call();
-              }),
-            ]
+            Container(height: 10),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 50, right: 50),
+              child: Row(
+                children: [
+                  Expanded(child: ElevatedButton(child: Text(TextConst.txtSignIn), onPressed: ()=> checkAndGo())),
+                ],
+              ),
+            ),
 
           ])
         )
@@ -104,21 +148,39 @@ class _LoginInviteState extends State<LoginInvite> {
       return;
     }
 
-    final ret = await widget.connect.loginByInvite(url, inviteKey);
+    final loginFuture = widget.connect.loginWithInvite(url, inviteKey, widget.loginMode);
 
-    if (!ret) {
-      setState(() {
-        _displayError = appState.serverConnect.lastError;
-      });
-      return;
-    }
+    loginFuture.then((ret) {
+      if (_loginProcess == null) {
+        return;
+      }
+      _loginProcess = null;
 
-    if (ret && widget.onLoginOk != null) {
-      widget.onLoginOk!.call();
-      return;
-    }
+      if (!ret) {
+        setState(() {
+          _displayError = widget.connect.lastError;
+        });
+        return;
+      }
 
-    if (!mounted) return;
-    Navigator.pop(context, true);
+      if (ret && widget.onLoginOk != null) {
+        widget.onLoginOk!.call();
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    });
+
+    _loginProcess = CancelableOperation<bool>.fromFuture(
+        loginFuture,
+        onCancel: () {
+          setState(() {
+            _loginProcess = null;
+          });
+        }
+    );
+
+    setState(() {});
   }
 }

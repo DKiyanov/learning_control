@@ -10,7 +10,8 @@ enum LoginMode{
 class TextConst{
   static String versionDateStr    = '19.09.2023';
   static String version           = 'Версия';
-  static String defaultURL        = 'http://192.168.0.142:1337/parse';
+//  static String defaultURL        = 'http://192.168.0.142:1337/parse';
+  static String defaultURL        = 'http://192.168.0.202:1337/parse';
 
   static String txtStarting       = 'Запуск';
   static String txtLoading        = 'Загрузка';
@@ -89,11 +90,12 @@ class TextConst{
   static String txtPinCodeClue       = 'Подсказка к пинкоду';
   static String txtInputPinCode      = 'Обязательно введите пинкод и подсказку к нему';
   static String txtInvalidInstallation = 'Похоже что то сломалось, лучше попробовать переустановить приложение';
+  static String txtCancel            = 'Отменить';
 
   static String txtLoginModeTitle      = 'Выбор режима использования устройства';
   static String txtLoginModeInvitation = 'Выбирите пожалуйста кем будет использоваться это устойство';
-  static String txtLoginModeMasterParent = 'Это устройство будет использоваться РОДИТЕЛЕМ (организатором группы)';
-  static String txtLoginModeSlaveParent = 'Это устройство будет использоваться РОДИТЕЛЕМ (участником группы)';
+  static String txtLoginModeMasterParent = 'Это устройство будет использоваться РОДИТЕЛЕМ\n(организатором группы)';
+  static String txtLoginModeSlaveParent = 'Это устройство будет использоваться РОДИТЕЛЕМ\n(участником группы)';
   static String txtLoginModeChild      = 'Это устройство будет использоваться РЕБЁНКОМ';
   static String txtImageFolder          = 'Каталог с картинками';
   static String txtSelectImageFolder    = 'Выбирите каталог с картинками';
@@ -115,6 +117,7 @@ class TextConst{
   static String txtInviteForParentTitle = 'для Родителя';
   static String txtInviteForParentText  = 'введите этот код на устройстве другого родителя при установке приложения или при повторном входе';
   static String txtInviteCopied         = 'Код скопирован в буффер обмена';
+  static String txtInviteLoginHelp      = 'Получите код приглашения у родителя\nорганизатора группы';
 
   static String errServerUrlEmpty  = 'Не указан адрес сервера';
   static String errServerUnavailable  = 'Сервер недоступен';
@@ -125,7 +128,8 @@ class TextConst{
 
 
   static String msgAppGroup1  = 'Есть другая группа с именем';
-  static String msgChildList1  = 'Ещё нет ни одного ребёнка, \nВыбирите пункт меню "Пригласить ребёнка"';
+  static String msgChildList1  = 'Ещё нет ни одного ребёнка';
+  static String msgChildList2  = 'Выбирите пункт меню "Пригласить ребёнка"';
 
   static String txtIgnoringBatteryOptimizationsTitle = 'Игнорирование оптмизации расхода энергии';
   static String txtIgnoringBatteryOptimizationsText  = 'Для того чтобы это приложение не закрывалось системой для оптимизации расхода заряда батареи';
