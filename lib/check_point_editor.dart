@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:learning_control/app_state.dart';
 import 'package:learning_control/parse/parse_app/parse_app_group.dart';
@@ -27,7 +28,7 @@ class CheckPointEditor extends StatefulWidget {
 class _CheckPointEditorState extends State<CheckPointEditor> {
   String  _checkTime           = '';
   late    DateTime _date          ;
-  int     _periodicity         = 0;
+  String  _periodicity         = '0';
   int     _completionRate      = 0;
   bool    _lockGroups          = true;
 
@@ -37,7 +38,7 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
   AppGroup?            _appGroup;
   CheckPointStatus?    _newStatus;
 
-  final dayList = <DropdownMenuItem<int>>[];
+  final cpDayNameList = <String>[];
   final appGroupList = <DropdownMenuItem<AppGroup>>[];
   final statusList = <DropdownMenuItem<CheckPointStatus>>[];
 
@@ -131,7 +132,7 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
   }
 
   _initDayList(){
-    final cpDayNameList = <String>[];
+    cpDayNameList.clear();
     cpDayNameList.addAll([
       TextConst.txtCpOnce,
       TextConst.txtCpEveryDay,
@@ -141,15 +142,6 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
     ]);
     cpDayNameList.addAll(dayNameList);
     cpDayNameList.remove(TextConst.txtTtAny);
-
-    for (int i = 0; i < cpDayNameList.length; i++){
-      dayList.add(
-        DropdownMenuItem<int>(
-          value: i,
-          child: Text(cpDayNameList[i]),
-        )
-      );
-    }
   }
 
   Future<void> _initAppGroupList() async {
@@ -270,20 +262,15 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
 
         Expanded(
           flex: 2,
-          child: DropdownButton<int>(
-            isDense: false,
-            isExpanded: true,
-            value: _periodicity,
-            onChanged: widget.viewOnly? null : (int? dayIndex) {
-              setState(() {
-                _periodicity = dayIndex!;
-                _date = _getNextDate(DateTime.now(), _periodicity);
-              });
+          child: ElevatedButton(
+            onPressed: widget.viewOnly? null : () async {
+              _periodicity = await _editPeriodicity(_periodicity);
+              _date = _getNextDate(DateTime.now(), _periodicity);
+              setState(() {});
             },
-            items: dayList,
+            child: Text(_periodicityToStr(_periodicity)),
           ),
-        ),
-
+        )
       ]),
 
       // Дата
@@ -367,6 +354,8 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
           ),
         )
       ]),
+
+      Container(height: 6),
 
       // Контроль выполнения отменяется через Х дней
       Row(children: [
@@ -684,7 +673,21 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
   }
 
   /// Возвращает дату на которую запланиррованно
-  DateTime _getNextDate(DateTime curDate, int periodicity){
+  DateTime _getNextDate(DateTime curDate, String periodicityStr){
+    final periodicityList = periodicityStr.split(',').map<int>((str) => int.tryParse(str)??0).toList();
+
+    DateTime? lowDate;
+    for (var periodicity in periodicityList) {
+      final newDate = _getNextDateEx(curDate, periodicity);
+      if (lowDate == null || lowDate.compareTo(newDate) > 0) {
+        lowDate = newDate;
+      }
+    }
+
+    return lowDate??curDate;
+  }
+
+  DateTime _getNextDateEx(DateTime curDate, int periodicity){
     if (periodicity <= 4) return curDate;
 
     periodicity -= 4; // Понедельник == 1
@@ -702,6 +705,84 @@ class _CheckPointEditorState extends State<CheckPointEditor> {
 
     if (curDate.day <= periodicity) return DateTime(curDate.year, curDate.month, periodicity);
     return DateTime(curDate.year, curDate.month + 1, periodicity);
+  }
+
+  Future<String> _editPeriodicity(String periodicity) async {
+    final perList = periodicity.split(',').map<int>((str) => int.tryParse(str)??0).toList();
+
+    final result = await showDialog<bool?>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              title: Text(TextConst.txtPeriodicity),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: cpDayNameList.mapIndexed<Widget>( (index, dayName){
+                    return ListTile(
+                      leading: StatefulBuilder(
+                        builder: (context, setState) {
+                          return Checkbox(
+                              value: perList.contains(index),
+                              onChanged: (selected) {
+                                setState((){
+                                  if (selected != null && selected) {
+                                    perList.add(index);
+                                  } else {
+                                    perList.remove(index);
+                                  }
+                                });
+                              }
+                          );
+                        },
+                      ),
+
+                      title: Text(dayName),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              actions: [
+                IconButton(
+                    icon: const Icon(Icons.clear_all),
+                    onPressed: (){
+                      setState(() {
+                        perList.clear();
+                      });
+                    }
+                ),
+
+                IconButton(
+                    icon: const Icon(Icons.cancel_outlined, color: Colors.deepOrangeAccent),
+                    onPressed: (){
+                      Navigator.pop(context, false);
+                    }
+                ),
+
+                IconButton(
+                    icon: const Icon(Icons.check, color: Colors.lightGreen),
+                    onPressed: () {
+                      Navigator.pop(context, true);
+                    }
+                ),
+              ],
+            );
+
+          });
+        }
+    );
+
+    if (result == null || !result) return periodicity;
+
+    return perList.join(',');
+  }
+
+  String _periodicityToStr(String periodicity) {
+    final dayList = periodicity.split(',').map<String>((str) => cpDayNameList[int.tryParse(str)??0] ).toList();
+    return dayList.join(', ');
   }
 }
 

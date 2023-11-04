@@ -98,7 +98,7 @@ class ParseConnect {
   Future<bool> loginWithInvite(String serverURL, String inviteKey, LoginMode loginMode) async {
     await _setServerURL(serverURL);
 
-    final sendKeyStr = inviteKey.replaceAll('\\D', '');
+    final sendKeyStr = inviteKey.replaceAll(RegExp('\\D'), '');
     final sendKeyInt = int.tryParse(sendKeyStr);
 
     final deviceID = await PlatformService.getDeviceID();

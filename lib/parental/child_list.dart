@@ -182,16 +182,22 @@ class _ChildListState extends State<ChildList> {
           Text(child.name),
 
           Row(children: [
-            Container(
-              padding: const EdgeInsets.all(5.0),
-              decoration: BoxDecoration(
-                color: Colors.lime,
-                  border: Border.all(
-                    color: Colors.lime,
-                  ),
-                  borderRadius: const BorderRadius.all(Radius.circular(20))
+            InkWell(
+              child: Container(
+                padding: const EdgeInsets.all(5.0),
+                decoration: BoxDecoration(
+                  color: Colors.lime,
+                    border: Border.all(
+                      color: Colors.lime,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(20))
+                ),
+                child: Text(' ${TextConst.txtBalanceValue}: ${balance.minutes} '),
               ),
-              child: Text(' ${TextConst.txtBalanceValue}: ${balance.minutes} '),
+
+              onTap: () {
+                _refresh();
+              },
             ),
 
             popupMenu(

@@ -47,7 +47,7 @@ class CheckPoint extends ParseObject implements ParseCloneable {
   static const String keyCheckTime           = 'CheckTime';            // String Время выполнения проверки
   static const String keyDate                = 'Date';                 // int Дата
   static const String keyDateTime            = 'DateTime';             // DateTime плановое время выполнения проверки (millisecondsSinceEpoch)
-  static const String keyPeriodicity         = 'Periodicity';          // int Переодичность, index in dayNameList; 0 - однократное выполнение
+  static const String keyPeriodicity         = 'Periodicity';          // String Переодичность, list of index in dayNameList; пусто - однократное выполнение
   static const String keyNoticeBeforeMinutes = 'NoticeBeforeMinutes';  // int Уведомелние за Х минут
   static const String keyCountDaysToCancel   = 'CountDaysToCancel';    // int - Количество дней для отмены - 0 задание не будет контролироваться на следующий день
   static const String keyCancelDate          = 'CancelDate';           // int - Дата прекращения контроля
@@ -77,7 +77,7 @@ class CheckPoint extends ParseObject implements ParseCloneable {
   String get checkTime              => get<String>(keyCheckTime          )??'';
   int    get date                   => get<int>(keyDate                  )??0;
   int    get dateTime               => get<int>(keyDateTime              )??0; // millisecondsSinceEpoch
-  int    get periodicity            => get<int>(keyPeriodicity           )??0;
+  String get periodicity            => get<String>(keyPeriodicity        )??'';
   int    get noticeBeforeMinutes    => get<int>(keyNoticeBeforeMinutes   )??0;
   int    get countDaysToCancel      => get<int>(keyCountDaysToCancel     )??0;
   int    get completionRate         => get<int>(keyCompletionRate        )??0;
@@ -113,7 +113,7 @@ class CheckPoint extends ParseObject implements ParseCloneable {
     required String taskText,
     required String checkTime,
     required int date,
-    int periodicity = 0, // не переодическое - однократное
+    String periodicity = '', // не переодическое - однократное
     int noticeBeforeMinutes = 0,
     int countDaysToCancel = 0,
     CheckPointStatus? status,
