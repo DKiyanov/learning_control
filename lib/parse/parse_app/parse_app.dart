@@ -84,7 +84,8 @@ class AppManager {
     // добавляем недостающие
     for (var localObject in localObjectList) {
       if (!serverObjectList.any((appGroup) => appGroup.packageName == localObject.packageName)) {
-        final iconFile = ParseWebFile(localObject.icon, name : localObject.packageName);
+        final techFileName = '${localObject.packageName.replaceAll('.', '_')}.data';
+        final iconFile = ParseWebFile(localObject.icon, name : techFileName);
         await iconFile.save();
         await DevAppIcon.createNew(_device!, localObject.packageName, iconFile).save();
         await DevApp.createNew(_device!, _child!, localObject.packageName, localObject.appName).save();

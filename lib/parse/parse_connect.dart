@@ -1,3 +1,4 @@
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -158,5 +159,22 @@ class ParseConnect {
   Future<bool> isServerAvailable() async {
     final result = await Parse().healthCheck();
     return result.success;
+  }
+
+  Future<bool> checkInviteKey(String inviteKey, LoginMode loginMode) async {
+    if (_user == null) return false;
+
+    final sendKeyStr = inviteKey.replaceAll(RegExp('\\D'), '');
+    final sendKeyInt = int.tryParse(sendKeyStr);
+
+    final publishPackFunction = ParseCloudFunction('checkInviteKey');
+    final response = await publishPackFunction.execute(parameters: {'inviteKey' : sendKeyInt, 'for' : loginMode.name});
+
+    if (!response.success) {
+      _lastError = response.result?["errCode"];
+      return false;
+    }
+
+    return response.result;
   }
 }

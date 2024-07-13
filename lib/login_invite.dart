@@ -5,8 +5,23 @@ import 'common.dart';
 import 'package:async/async.dart';
 
 class LoginInvite extends StatefulWidget {
-  static Future<Object> navigate({required BuildContext context, required ParseConnect connect, required LoginMode loginMode, required String title, VoidCallback? onLoginOk, VoidCallback? onLoginCancel}) async {
-    return Navigator.push(context, MaterialPageRoute(builder: (_) => LoginInvite(connect: connect, loginMode: loginMode, title: title, onLoginOk: onLoginOk, onLoginCancel: onLoginCancel)));
+  static Future<Object> navigate({
+    required BuildContext context,
+    required ParseConnect connect,
+    required LoginMode loginMode,
+    required String title,
+    VoidCallback? onLoginOk,
+    VoidCallback? onLoginCancel,
+    bool? checkInvite
+  }) async {
+    return Navigator.push(context, MaterialPageRoute(builder: (_) => LoginInvite(
+        connect: connect,
+        loginMode: loginMode,
+        title: title,
+        onLoginOk: onLoginOk,
+        onLoginCancel: onLoginCancel,
+        checkInvite: checkInvite,
+    )));
   }
 
   final ParseConnect  connect;
@@ -14,8 +29,9 @@ class LoginInvite extends StatefulWidget {
   final String        title;
   final VoidCallback? onLoginOk;
   final VoidCallback? onLoginCancel;
+  final bool?         checkInvite;
 
-  const LoginInvite({required this.connect, required this.loginMode, required this.title, this.onLoginOk, this.onLoginCancel, Key? key}) : super(key: key);
+  const LoginInvite({required this.connect, required this.loginMode, required this.title, this.onLoginOk, this.onLoginCancel, this.checkInvite, Key? key}) : super(key: key);
 
   @override
   State<LoginInvite> createState() => _LoginInviteState();
@@ -148,7 +164,13 @@ class _LoginInviteState extends State<LoginInvite> {
       return;
     }
 
-    final loginFuture = widget.connect.loginWithInvite(url, inviteKey, widget.loginMode);
+    Future<bool> loginFuture;
+
+    if (widget.checkInvite??false) {
+      loginFuture = widget.connect.checkInviteKey(inviteKey, widget.loginMode);
+    } else {
+      loginFuture = widget.connect.loginWithInvite(url, inviteKey, widget.loginMode);
+    }
 
     loginFuture.then((ret) {
       if (_loginProcess == null) {

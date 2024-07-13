@@ -51,12 +51,12 @@ class _LoginState extends State<Login> {
       _tcServerURL.text = TextConst.defaultURL;
     }
 
-    if (_tcLogin.text.isEmpty){
-      _tcLogin.text     = 'DKianov@mail.ru';
-    }
-
     if (_tcLogin.text.isNotEmpty){
       _loginReadOnly = true;
+    }
+
+    if (_tcLogin.text.isEmpty){
+      _tcLogin.text     = 'DKianov@mail.ru';
     }
   }
 

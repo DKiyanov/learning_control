@@ -100,11 +100,12 @@ class _ParentalMenuState extends State<ParentalMenu> {
       ElevatedButton(
         onPressed: () {
           LoginInvite.navigate(
-            context  : context,
-            connect  : appState.serverConnect,
-            loginMode: appState.loginMode,
-            title    : TextConst.txtEntryToOptions,
-            onLoginOk: () async {
+            context     : context,
+            connect     : appState.serverConnect,
+            loginMode   : appState.loginMode,
+            checkInvite : true,
+            title       : TextConst.txtEntryToOptions,
+            onLoginOk   : () async {
               await Options.navigatorPushReplacement(context);
               setState(() {});
             }

@@ -1,6 +1,8 @@
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../platform_service.dart';
+
 /// Запись ребёнка
 class Child extends ParseObject implements ParseCloneable {
   static const String keyChild  = 'Child';
@@ -95,10 +97,11 @@ class ChildManager {
 class Device extends ParseObject implements ParseCloneable {
   static const String keyDevice = 'Device';
 
-  static const String keyUserID  = 'UserID';
-  static const String keyChildID = 'ChildID';
-  static const String keyName    = 'Name';
-  static const String keyColor   = 'Color';
+  static const String keyUserID     = 'UserID';
+  static const String keyChildID    = 'ChildID';
+  static const String keyName       = 'Name';
+  static const String keyColor      = 'Color';
+  static const String keyDeviceOSID = 'DeviceOSID';
 
   Device() : super(keyDevice);
   Device.clone() : this();
@@ -110,12 +113,15 @@ class Device extends ParseObject implements ParseCloneable {
   int    get color   => get<int>(keyColor)??0;
   String get childID => get<String>(keyChildID)??'';
 
-  static Device createNew(ParseUser user, Child child, String deviceName, int color){
+  static Future<Device> createNew(ParseUser user, Child child, String deviceName, int color) async {
+    final deviceOSID = await PlatformService.getDeviceID();
+
     final newDevice = Device();
     newDevice.set(keyUserID  , user.objectId  );
     newDevice.set(keyChildID , child.objectId );
     newDevice.set(keyName    , deviceName     );
     newDevice.set(keyColor   , color          );
+    newDevice.set(keyDeviceOSID, deviceOSID   );
     return newDevice;
   }
 
@@ -152,7 +158,7 @@ class DeviceManager {
       return _device;
     }
 
-    final newDevice = Device.createNew(user, child, deviceName, color);
+    final newDevice = await Device.createNew(user, child, deviceName, color);
     await newDevice.save();
 
     await setDeviceAsCurrent(newDevice);
@@ -195,5 +201,15 @@ class DeviceManager {
     // остальные связанные данные должны удаляться по тригеру на сервере
 
     return result.success;
+  }
+
+  Future<Device?> getFromDeviceOSID(ParseUser user) async {
+    final deviceOSID = await PlatformService.getDeviceID();
+
+    final query = QueryBuilder<Device>(Device());
+    query.whereEqualTo(Device.keyUserID, user.objectId);
+    query.whereEqualTo(Device.keyDeviceOSID, deviceOSID);
+
+    return await query.first();
   }
 }

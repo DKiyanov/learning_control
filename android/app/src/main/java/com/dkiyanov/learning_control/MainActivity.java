@@ -179,7 +179,7 @@ public class MainActivity extends FlutterActivity {
 
     private boolean isUsageAccessExists(){
         try {
-            Log.d(TAG, "isUsageAccessExists");
+            // Log.d(TAG, "isUsageAccessExists");
 
             PackageManager packageManager = getPackageManager();
             ApplicationInfo applicationInfo = packageManager.getApplicationInfo(getPackageName(), 0);
@@ -193,7 +193,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean showUsageAccessSettings(){
-        Log.d(TAG, "showUsageAccessSettings");
+        // Log.d(TAG, "showUsageAccessSettings");
 
         try {
             Intent intent = new Intent(
@@ -216,7 +216,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean showDrawOverlaysSettings(){
-        Log.d(TAG, "showDrawOverlaysSettings");
+        // Log.d(TAG, "showDrawOverlaysSettings");
 
         try {
             Intent intent = new Intent(
@@ -240,7 +240,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean showBatteryOptimizationsSettings(){
-        Log.d(TAG, "showBatteryOptimizationsSettings");
+        // Log.d(TAG, "showBatteryOptimizationsSettings");
 
         Intent intent = new Intent();
         intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
@@ -292,7 +292,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean showLauncherSettings(){
-        Log.d(TAG, "showLauncherSettings");
+        // Log.d(TAG, "showLauncherSettings");
         Intent intent = new Intent(
                 Settings.ACTION_HOME_SETTINGS
         );
@@ -302,7 +302,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean backToHome() {
-        Log.d(TAG, "backToHome");
+        // Log.d(TAG, "backToHome");
 
 // Почему не всегда полностью корректно отрабатывет
 // например не может перебить recent apps screen

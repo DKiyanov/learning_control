@@ -119,7 +119,7 @@ class AppState {
   late PinCodeManager pinCodeManager;
 
   /// Инициализация
-  Future<void> initialization(ParseConnect serverConnect, LoginMode loginMode) async {
+  Future<void> initialization(ParseConnect serverConnect, LoginMode loginMode, bool firstRun) async {
     this.serverConnect = serverConnect;
     this.loginMode     = loginMode;
     usingMode = loginMode == LoginMode.child ? UsingMode.child : UsingMode.parent;
@@ -169,7 +169,7 @@ class AppState {
 
     objectsManager = ParseDirector(this);
 
-    if (usingMode == LoginMode.child) {
+    if (usingMode == UsingMode.child && !firstRun) {
       await objectsManager.initChildDevice();
       await monitoring.readStatus();
     }
@@ -180,7 +180,6 @@ class AppState {
   }
 
   Future<bool> monitoringSwitchingOffDialog(BuildContext context) async {
-    final textController = TextEditingController();
     String  password = '';
 
     final result = await showDialog<bool>(
@@ -192,7 +191,6 @@ class AppState {
               onChanged: (value) {
                 password = value;
               },
-              controller: textController,
               decoration: InputDecoration(
                 hintText: TextConst.txtPasswordPinCode,
                 suffixIcon: IconButton(
@@ -221,7 +219,6 @@ class AppState {
           );
         });
 
-    textController.dispose();
     return result??false;
   }
 

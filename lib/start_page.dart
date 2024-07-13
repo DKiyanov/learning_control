@@ -117,7 +117,7 @@ class _StartPageState extends State<StartPage> {
 
     if (_appStateInitMode == 0) {
       _appStateInitMode = 1;
-      AppState().initialization(_serverConnect!, _loginMode!).then((_) {
+      AppState().initialization(_serverConnect!, _loginMode!, _showFirstConfig).then((_) {
         setState(() {
           _appStateInitMode = 2;
         });

@@ -1,5 +1,7 @@
+import 'dart:async';
+
+import 'package:collection/collection.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:learning_control/parental/apps_tuner.dart';
 import 'platform_service.dart';
 import 'package:flutter/material.dart';
 import 'common.dart';
@@ -30,10 +32,14 @@ class _OptionsState extends State<Options> {
   bool _drawOverlaysOk = false;
   bool _launcherOk     = false;
 
+  Timer? _checkSettingsTimer;
+
   bool _isControlOn    = false;
 
   bool _obscurePinCode = true;
   bool _obscurePinCodeChanged = false;
+
+  bool _somethingChanged = false;
 
   Child? _child;
   Device? _device;
@@ -80,6 +86,8 @@ class _OptionsState extends State<Options> {
     _textControllerPinCode.dispose();
     _textControllerPinCodeClue.dispose();
 
+    _checkSettingsTimer?.cancel();
+
     super.dispose();
 
     appState.monitoring.setMonitoring();
@@ -101,11 +109,26 @@ class _OptionsState extends State<Options> {
     _child  = appState.childManager.getCurrentChild();
     _device = appState.deviceManager.getCurrentDevice();
 
-    if (_child != null) _oldChildName = _child!.name;
-    _textControllerChildName.text = _oldChildName;
+    if (_child != null) {
+      _textControllerChildName.text = _child!.name;
+      _oldChildName = _child!.name;
+    }
+    if (_device != null) {
+      _textControllerDeviceName.text = _device!.name;
+      _oldDeviceName = _device!.name;
+    }
 
-    if (_device != null) _oldDeviceName = _device!.name;
-    _textControllerDeviceName.text = _oldDeviceName;
+    if (_child == null && _device == null && _deviceList.isNotEmpty) {
+      _selDevice = await appState.deviceManager.getFromDeviceOSID(appState.serverConnect.user!);
+      if (_selDevice != null) {
+        _textControllerDeviceName.text = _selDevice!.name;
+        _selChild = _childList.firstWhereOrNull( (child) => child.objectId == _selDevice!.childID);
+        if (_selChild != null) {
+          _textControllerChildName.text = _selChild!.name;
+        }
+        _somethingChanged = true;
+      }
+    }
 
     _ignoringBatteryOptimizationsOk = await PlatformService.isIgnoringBatteryOptimizations();
     _usageAccessOk  = await PlatformService.isUsageAccessExists();
@@ -116,8 +139,43 @@ class _OptionsState extends State<Options> {
 
     _textControllerPinCodeClue.text = appState.pinCodeManager.clue;
 
+    _checkSettingsTimer = Timer.periodic(const Duration(seconds: 1), (timer) => _checkSettings() );
+
     setState(() {
       _isStarting = false;
+    });
+  }
+
+  void _checkSettings() {
+    if (_isStarting) return;
+    if (!mounted) return;
+
+    PlatformService.isIgnoringBatteryOptimizations().then((value) {
+      if (_ignoringBatteryOptimizationsOk == value) return;
+      setState(() {
+        _ignoringBatteryOptimizationsOk = value;
+      });
+    });
+
+    PlatformService.isUsageAccessExists().then((value) {
+      if (_usageAccessOk == value) return;
+      setState(() {
+        _usageAccessOk = value;
+      });
+    });
+
+    PlatformService.isCanDrawOverlays().then((value) {
+      if (_drawOverlaysOk == value) return;
+      setState(() {
+        _drawOverlaysOk = value;
+      });
+    });
+
+    PlatformService.isMyLauncherDefault().then((value) {
+      if (_launcherOk == value) return;
+      setState(() {
+        _launcherOk = value;
+      });
     });
   }
 
@@ -228,7 +286,7 @@ class _OptionsState extends State<Options> {
                           child: Text(childName),
                           onPress: () {
                             setState(() {
-                              _textControllerChildName.text = childName != TextConst.txtAddNewChild?childName:'';
+                              _textControllerChildName.text = childName != TextConst.txtAddNewChild? childName : '';
                               _addNewChild = false;
                               _selChild    = null;
                               if (childName == TextConst.txtAddNewChild){
@@ -236,12 +294,14 @@ class _OptionsState extends State<Options> {
                               } else {
                                 _selChild = _childList.firstWhere((child) => child.name == childName);
                               }
+                              _somethingChanged = true;
                             });
                           }
                         )).toList()
                     ): null
                 ),
                 onChanged: ((_) {
+                  _somethingChanged = true;
                   setState(() { });
                 }),
               ),
@@ -249,7 +309,7 @@ class _OptionsState extends State<Options> {
 
             // Поле ввода "Имя устройства"
             Padding(
-              padding: const EdgeInsets.all(15.0),
+              padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15),
               child: TextField(
                 controller: _textControllerDeviceName,
                 readOnly: !_serverAvailable,
@@ -272,7 +332,7 @@ class _OptionsState extends State<Options> {
                         child: Text(deviceName),
                         onPress: () {
                           setState(() {
-                            _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice?deviceName:'';
+                            _textControllerDeviceName.text = deviceName != TextConst.txtAddNewDevice? deviceName : '';
                             _addNewDevice = false;
                             _selDevice    = null;
                             if (deviceName == TextConst.txtAddNewDevice){
@@ -280,6 +340,7 @@ class _OptionsState extends State<Options> {
                             } else {
                               _selDevice = _deviceList.firstWhere((device) => device.name == deviceName);
                             }
+                            _somethingChanged = true;
                           });
                         }
                       )).toList()
@@ -287,31 +348,15 @@ class _OptionsState extends State<Options> {
 
                 ),
                 onChanged: ((_) {
+                  _somethingChanged = true;
                   setState(() { });
                 }),
               ),
             ),
 
-            // Выбор типа устройства
-            ListTile(
-              title: Text(TextConst.txtDeviceType),
-              trailing: DropdownButton<DeviceType>(
-                  value: appState.deviceType,
-                  items: DeviceType.values.map<DropdownMenuItem<DeviceType>>((deviceType) => DropdownMenuItem<DeviceType>(
-                    value: deviceType,
-                    child: Text(getDeviceTypeName(deviceType)),
-                  )).toList(),
-                  onChanged: (deviceType){
-                    appState.deviceType = deviceType!;
-                    setState((){ });
-                  }
-              ),
-            ),
-
-
             // Поле ввода "Пин код"
             Padding(
-              padding: const EdgeInsets.all(15.0),
+              padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15),
               child: TextField(
                 controller: _textControllerPinCode,
                 decoration: InputDecoration(
@@ -337,10 +382,9 @@ class _OptionsState extends State<Options> {
                 ),
                 obscureText: _obscurePinCode,
                 onChanged: ((_) {
-                  if (!_obscurePinCodeChanged) return;
-                  setState((){
-                    _obscurePinCodeChanged = true;
-                  });
+                  _somethingChanged = true;
+                  _obscurePinCodeChanged = true;
+                  setState((){});
                 }),
               ),
             ),
@@ -364,8 +408,27 @@ class _OptionsState extends State<Options> {
                   ),
                 ),
                 onChanged: ((_) {
+                  _somethingChanged = true;
                   _obscurePinCodeChanged = true;
+                  setState((){ });
                 })
+              ),
+            ),
+
+            // Выбор типа устройства
+            ListTile(
+              title: Text(TextConst.txtDeviceType),
+              trailing: DropdownButton<DeviceType>(
+                  value: appState.deviceType,
+                  items: DeviceType.values.map<DropdownMenuItem<DeviceType>>((deviceType) => DropdownMenuItem<DeviceType>(
+                    value: deviceType,
+                    child: Text(getDeviceTypeName(deviceType)),
+                  )).toList(),
+                  onChanged: (deviceType){
+                    _somethingChanged = true;
+                    appState.deviceType = deviceType!;
+                    setState((){ });
+                  }
               ),
             ),
 
@@ -375,37 +438,25 @@ class _OptionsState extends State<Options> {
               trailing: Switch(
                 value: _isControlOn,
                 onChanged: controlSwitchEnabled ? (value) {
-                  setState(() {
-                    _isControlOn = value;
-                  });
+                  _somethingChanged = true;
+                  _isControlOn = value;
+                  setState(() {});
                 }:null,
               ),
             ),
 
 
             // Кнопка "Применить изменения"
-            if (_isControlOn != appState.monitoring.status
-                || _textControllerChildName.text != _oldChildName
-                || _textControllerDeviceName.text != _oldDeviceName
-            ) ...[
+            if (_somethingChanged) ...[
               Padding(
                 padding: const EdgeInsets.only(left: 15, right: 15),
                 child: ElevatedButton(
-                  onPressed: applyChanges,
+                  onPressed: () async {
+                    await applyChanges();
+                    setState(() {});
+                  },
                   child: Text(TextConst.txtApplyChanges)
                 )
-              ),
-            ],
-
-
-            // Кнопка "Настройка приложений"
-            if (_child != null && _device != null ) ...[
-              Padding(
-                  padding: const EdgeInsets.only(left: 15, right: 15),
-                  child: ElevatedButton(
-                      onPressed: showAppsTunerPage,
-                      child: Text(TextConst.txtAppsSetup)
-                  )
               ),
             ],
 
@@ -415,8 +466,10 @@ class _OptionsState extends State<Options> {
                   padding: const EdgeInsets.only(left: 15, right: 15),
                   child: ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      onPressed: ((_child != null && _device != null ))? (){
-                        widget.onOptionsOk!.call();
+                      onPressed: ((_child != null && _device != null ))? () async {
+                        if (await applyChanges()) {
+                          widget.onOptionsOk!.call();
+                        }
                       } : null,
                       child: Text(TextConst.txtNext)
                   )
@@ -428,16 +481,16 @@ class _OptionsState extends State<Options> {
     );
   }
 
-  void applyChanges() async {
+  Future<bool> applyChanges() async {
     if ( (_obscurePinCodeChanged && _textControllerPinCode.text.isEmpty ) || _textControllerPinCodeClue.text.isEmpty) {
       Fluttertoast.showToast(msg: TextConst.txtInputPinCode);
-      return;
+      return false;
     }
 
     if (_obscurePinCodeChanged) {
       if (_textControllerPinCode.text.isEmpty || _textControllerPinCodeClue.text.isEmpty) {
         Fluttertoast.showToast(msg: TextConst.txtInputPinCode);
-        return;
+        return false;
       }
       appState.pinCodeManager.setPinCode(_textControllerPinCode.text, _textControllerPinCodeClue.text);
     }
@@ -457,7 +510,7 @@ class _OptionsState extends State<Options> {
     
     final deviceName = _textControllerDeviceName.text;
     if (_addNewDevice){
-      final newDevice = Device.createNew(appState.serverConnect.user!, _child!, deviceName, 0);
+      final newDevice = await Device.createNew(appState.serverConnect.user!, _child!, deviceName, 0);
       await appState.deviceManager.setDeviceAsCurrent(newDevice);
       _device = appState.deviceManager.getCurrentDevice();
     } else {
@@ -474,7 +527,17 @@ class _OptionsState extends State<Options> {
       await appState.objectsManager.synchronize(showErrorToast: true, ignoreShortTime: true);
     }
 
-    setState(() {});
+    _somethingChanged = false;
+    _obscurePinCodeChanged = false;
+
+    if (_child != null) {
+      _oldChildName = _selChild!.name;
+    }
+    if (_device != null) {
+      _oldDeviceName = _selDevice!.name;
+    }
+
+    return true;
   }
 
   Future<void> saveChild(String childName) async {
@@ -516,11 +579,5 @@ class _OptionsState extends State<Options> {
     PlatformService.showLauncherSettings();
     _launcherOk = await PlatformService.isMyLauncherDefault();
     setState(() { });
-  }
-
-  Future<void> showAppsTunerPage() async {
-    await appState.objectsManager.synchronize(showErrorToast: true, ignoreShortTime: false);
-    if (!mounted) return;
-    AppsTuner.navigatorPush(context, _child!, _device!);
   }
 }
